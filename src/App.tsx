@@ -6,7 +6,12 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Counsellors from "./pages/Counsellors";
+import CounsellorProfile from "./pages/CounsellorProfile";
+import MyProfile from "./pages/MyProfile";
+import AdminCounsellors from "./pages/AdminCounsellors";
 
+// React Router does not scroll to #anchors by itself, so links like "/#services" need this.
 function ScrollToHash() {
   const { pathname, hash } = useLocation();
   useEffect(() => {
@@ -28,7 +33,11 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/counsellors" element={<Counsellors />} />
+        <Route path="/counsellors/:slug" element={<CounsellorProfile />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/my/profile" element={<ProtectedRoute roles={["counsellor"]}><MyProfile /></ProtectedRoute>} />
+        <Route path="/admin/counsellors" element={<ProtectedRoute roles={["admin"]}><AdminCounsellors /></ProtectedRoute>} />
         <Route path="*" element={<p className="center-note">Page not found.</p>} />
       </Routes>
     </>

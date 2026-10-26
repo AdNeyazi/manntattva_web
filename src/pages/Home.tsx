@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { api, type CounsellorSummary } from "../api";
 import { useAuth } from "../auth/AuthContext";
+import CounsellorCard from "../components/CounsellorCard";
 import { Mandala, Stars } from "../components/Decor";
 import Footer from "../components/Footer";
 
@@ -52,25 +55,24 @@ const SERVICES: { icon: IconName; title: string; text: string; to?: string; cta?
   { icon: "smile", title: "Free Mind Check", text: "A short self-assessment to help you understand where you are today." },
 ];
 
-const COUNSELLORS = [
-  { name: "Puja Jain", role: "Senior Psychologist & Research Lead", focus: "Couples therapy · Trauma recovery · Conflict resolution" },
-  { name: "Chinmai Hemanth", role: "Psychologist & Educator", focus: "Clinical hypnosis · Yogic wisdom · Positive psychology" },
-  { name: "Saundaryima Malviya", role: "Counselling Psychologist", focus: "Cognitive reframing · Anxiety · Inner resilience" },
-  { name: "Maithili Nargund", role: "Counselling Psychologist, REBT certified", focus: "Cognitive restructuring · Youth empowerment" },
-];
-
 const STEPS = [
   { n: "1", title: "Create your account", text: "Sign up in a minute. No payment needed to look around." },
   { n: "2", title: "Choose your counsellor", text: "Browse profiles by specialisation and language, and pick who feels right." },
   { n: "3", title: "Book and begin", text: "Pick a time, choose phone or video, and start your session." },
 ];
 
-const initials = (name: string) =>
-  name.split(" ").map((p) => p[0]).slice(0, 2).join("");
-
 export default function Home() {
   const { user } = useAuth();
   const primaryTo = user ? "/dashboard" : "/signup";
+
+  const [team, setTeam] = useState<CounsellorSummary[] | null>(null);
+
+  useEffect(() => {
+    api.counsellors
+      .list({ limit: 4 })
+      .then((d) => setTeam(d.counsellors))
+      .catch(() => setTeam([]));
+  }, []);
 
   return (
     <>
@@ -162,16 +164,19 @@ export default function Home() {
             <h2>Meet your counsellors</h2>
             <p>Trained psychologists who blend clinical precision with a compassionate presence.</p>
           </div>
-          <div className="grid-4">
-            {COUNSELLORS.map((c) => (
-              <article className="card person" key={c.name}>
-                <span className="avatar" aria-hidden="true">{initials(c.name)}</span>
-                <h3>{c.name}</h3>
-                <p className="person-role">{c.role}</p>
-                <p className="person-focus">{c.focus}</p>
-              </article>
-            ))}
-          </div>
+          {team !== null && team.length === 0 && (
+            <p className="muted-center">Our counsellor profiles are coming soon.</p>
+          )}
+          {team !== null && team.length > 0 && (
+            <>
+              <div className="counsellor-grid">
+                {team.map((c) => <CounsellorCard key={c.id} c={c} />)}
+              </div>
+              <div className="center-cta center-cta--light">
+                <Link className="btn btn-indigo" to="/counsellors">See all counsellors</Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
 

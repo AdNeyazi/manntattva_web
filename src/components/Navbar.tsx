@@ -24,14 +24,15 @@ export default function Navbar() {
         <nav className="nav-links" aria-label="Main">
           <Link to="/#about">About</Link>
           <Link to="/#services">Services</Link>
-          <Link to="/#counsellors">Counsellors</Link>
+          <Link to="/counsellors">Counsellors</Link>
           <Link to="/#how">How it works</Link>
         </nav>
 
         <div className="nav-actions">
           {user ? (
             <>
-              <Link className="link-quiet" to="/dashboard">Hi, {user.full_name.split(" ")[0]}</Link>
+              {user.role === "counsellor" && <Link className="link-quiet" to="/my/profile">My profile</Link>}
+              {user.role === "admin" && <Link className="link-quiet" to="/admin/counsellors">Admin</Link>}<Link className="link-quiet" to="/dashboard">Hi, {user.full_name.split(" ")[0]}</Link>
               <button className="btn btn-sm btn-line" onClick={handleLogout}>Log out</button>
             </>
           ) : (
