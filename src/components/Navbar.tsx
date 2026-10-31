@@ -29,10 +29,14 @@ export default function Navbar() {
         </nav>
 
         <div className="nav-actions">
+          <Link className="btn btn-sm btn-gold nav-book" to="/booking?segment=heartbreak">
+            Book session
+          </Link>
           {user ? (
             <>
               {user.role === "counsellor" && <Link className="link-quiet" to="/my/profile">My profile</Link>}
-              {user.role === "admin" && <Link className="link-quiet" to="/admin/counsellors">Admin</Link>}<Link className="link-quiet" to="/dashboard">Hi, {user.full_name.split(" ")[0]}</Link>
+              {user.role === "admin" && <Link className="link-quiet" to="/admin/counsellors">Admin</Link>}
+              <Link className="link-quiet" to="/dashboard">Hi, {user.full_name.split(" ")[0]}</Link>
               <button className="btn btn-sm btn-line" onClick={handleLogout}>Log out</button>
             </>
           ) : (

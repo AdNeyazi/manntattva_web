@@ -99,6 +99,7 @@ export interface CounsellorDetail extends CounsellorSummary {
   educations: EducationRecord[];
   experiences: ExperienceRecord[];
   timezone: string;
+  slot_minutes: number;
   next_available_at: string | null;
   availability: AvailabilityDay[];
 }
@@ -153,6 +154,32 @@ export interface CounsellorFilters {
   specialization?: string;
   mode?: "" | "online" | "offline";
   limit?: number;
+}
+
+export interface AppointmentCounsellor {
+  slug: string;
+  full_name: string;
+  designation: string | null;
+}
+
+export interface AppointmentStudent {
+  full_name: string;
+  email: string;
+}
+
+export interface Appointment {
+  id: number;
+  status: string;
+  mode: string;
+  note: string | null;
+  payment_status: string;
+  reschedule_count: number;
+  starts_at: string;
+  ends_at: string;
+  timezone: string;
+  meeting_link: string | null;
+  counsellor: AppointmentCounsellor;
+  student?: AppointmentStudent;
 }
 
 interface ErrorBody {
@@ -253,6 +280,22 @@ export const api = {
   lookups: {
     languages: () => request<{ languages: Option[] }>("/api/v1/languages"),
     specializations: () => request<{ specializations: Option[] }>("/api/v1/specializations"),
+  },
+
+  appointments: {
+    list: () => request<{ appointments: Appointment[] }>("/api/v1/appointments"),
+    create: (values: { counsellor_slug: string; date: string; time: string; note?: string }) =>
+      request<{ appointment: Appointment }>("/api/v1/appointments", {
+        method: "POST",
+        body: values,
+      }),
+    reschedule: (id: number, values: { date: string; time: string }) =>
+      request<{ appointment: Appointment }>(`/api/v1/appointments/${id}/reschedule`, {
+        method: "PATCH",
+        body: values,
+      }),
+    cancel: (id: number) =>
+      request<{ appointment: Appointment }>(`/api/v1/appointments/${id}/cancel`, { method: "PATCH" }),
   },
 
   // ----- Counsellor (own profile) -----

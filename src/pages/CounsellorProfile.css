@@ -203,6 +203,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
   min-width: min(100%, 280px);
   padding: 14px 28px;
   border: 0;

@@ -8,6 +8,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Counsellors from "./pages/Counsellors";
 import CounsellorProfile from "./pages/CounsellorProfile";
+import Booking from "./pages/Booking";
 import MyProfile from "./pages/MyProfile";
 import AdminCounsellors from "./pages/AdminCounsellors";
 
@@ -34,7 +35,15 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/counsellors" element={<Counsellors />} />
+        <Route
+          path="/booking"
+          element={<ProtectedRoute><Booking /></ProtectedRoute>}
+        />
         <Route path="/counsellors/:slug" element={<CounsellorProfile />} />
+        <Route
+          path="/counsellors/:slug/book"
+          element={<ProtectedRoute><Booking /></ProtectedRoute>}
+        />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/my/profile" element={<ProtectedRoute roles={["counsellor"]}><MyProfile /></ProtectedRoute>} />
         <Route path="/admin/counsellors" element={<ProtectedRoute roles={["admin"]}><AdminCounsellors /></ProtectedRoute>} />
