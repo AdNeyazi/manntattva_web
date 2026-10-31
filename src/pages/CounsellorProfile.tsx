@@ -27,11 +27,13 @@ const ICONS = {
   check: "M5 12.5 9.2 16.8 19 7",
 };
 
-function BookAction({ firstName }: { firstName: string }) {
+function BookAction({ firstName, slug }: { firstName: string; slug: string }) {
   return (
     <>
-      <button className="cprofile-book" disabled>Book a session with {firstName}</button>
-      <p className="cprofile-fine">Online booking opens soon.</p>
+      <Link className="cprofile-book" to={`/counsellors/${slug}/book`}>
+        Book a session with {firstName}
+      </Link>
+      <p className="cprofile-fine">Pick a date and time that works for you.</p>
     </>
   );
 }
@@ -221,7 +223,7 @@ export default function CounsellorProfile() {
             <p className="cprofile-next">Next available: {formatWhen(c.next_available_at, c.timezone)}</p>
           )}
 
-          <div className="cprofile-actions"><BookAction firstName={firstName} /></div>
+          <div className="cprofile-actions"><BookAction firstName={firstName} slug={c.slug} /></div>
 
           {links.length > 0 && (
             <div className="cprofile-social">
@@ -297,8 +299,8 @@ export default function CounsellorProfile() {
 
         <div className="cprofile-cta">
           <h2>Ready to start your journey?</h2>
-          <p>Take the first step. Book a session with {firstName} when online booking opens.</p>
-          <BookAction firstName={firstName} />
+          <p>Take the first step. Book a session with {firstName} in a few clicks.</p>
+          <BookAction firstName={firstName} slug={c.slug} />
         </div>
       </div>
     </section>

@@ -13,7 +13,8 @@ export default function ProtectedRoute({ children, roles }: ProtectedRouteProps)
   const location = useLocation();
 
   if (loading) return <p className="center-note">Loading…</p>;
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  const returnTo = `${location.pathname}${location.search}`;
+  if (!user) return <Navigate to="/login" replace state={{ from: returnTo }} />;
   if (roles && !roles.includes(user.role)) {
     return <p className="center-note">You do not have access to this page.</p>;
   }
