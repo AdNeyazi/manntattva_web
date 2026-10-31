@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, errorMessages, type CounsellorFilters, type CounsellorSummary, type Option } from "../api";
 import CounsellorCard from "../components/CounsellorCard";
+import "./Counsellors.css";
 
 const MODES = [
   { id: "online", value: "online", label: "Online" },
@@ -40,13 +41,11 @@ export default function Counsellors() {
   const [items, setItems] = useState<CounsellorSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter dropdown options: loaded once.
   useEffect(() => {
     api.lookups.languages().then((d) => setLanguages(d.languages)).catch(() => undefined);
     api.lookups.specializations().then((d) => setSpecializations(d.specializations)).catch(() => undefined);
   }, []);
 
-  // The list reloads whenever a filter changes.
   useEffect(() => {
     let cancelled = false;
     api.counsellors
@@ -69,49 +68,72 @@ export default function Counsellors() {
   const languageOptions = languages.map((l) => ({ id: String(l.id), value: l.name, label: l.name }));
   const specialityOptions = specializations.map((s) => ({ id: String(s.id), value: s.name, label: s.name }));
 
+  const countLabel =
+    items === null
+      ? "Loading…"
+      : items.length === 0
+        ? "No matches"
+        : `${items.length} ${items.length === 1 ? "counsellor" : "counsellors"}`;
+
   return (
-    <section className="page container counsellors">
-      <header className="page-head page-head--center">
-        <span className="eyebrow eyebrow--light">Our team</span>
-        <h1>Find a counsellor who feels right</h1>
-        <p>Qualified practitioners you can filter by language, speciality, and how you would like to meet.</p>
+    <div className="counsellors-page">
+      <header className="counsellors-hero">
+        <div className="container">
+          <div className="counsellors-hero-inner">
+            <span className="eyebrow">Our team</span>
+            <h1>
+              Find a counsellor who <em>feels right</em>
+            </h1>
+            <p>
+              Qualified practitioners you can filter by language, speciality, and how you would like to meet.
+            </p>
+          </div>
+        </div>
       </header>
 
-      <div className="filter-bar">
-        <FilterField label="Language" value={filters.language ?? ""} onChange={set("language")} options={languageOptions} />
-        <FilterField label="Speciality" value={filters.specialization ?? ""} onChange={set("specialization")} options={specialityOptions} />
-        <FilterField label="Session type" value={filters.mode ?? ""} onChange={set("mode")} options={MODES} />
-        {filtering && (
-          <button type="button" className="btn btn-line btn-sm filter-clear" onClick={() => setFilters(EMPTY_FILTERS)}>
-            Clear
-          </button>
-        )}
-      </div>
-
-      {error && <p className="form-error" role="alert">{error}</p>}
-      {!error && items === null && <p className="muted-center">Loading counsellors…</p>}
-      {items !== null && (
-        <p className="result-line">
-          {items.length === 0
-            ? "No counsellors match these filters"
-            : `${items.length} ${items.length === 1 ? "counsellor" : "counsellors"}`}
-        </p>
-      )}
-      {items !== null && items.length === 0 && (
-        <div className="empty-state">
-          <p>Try another language, speciality, or session type.</p>
+      <section className="counsellors-body container">
+        <div className="counsellors-filters">
+          <FilterField label="Language" value={filters.language ?? ""} onChange={set("language")} options={languageOptions} />
+          <FilterField label="Speciality" value={filters.specialization ?? ""} onChange={set("specialization")} options={specialityOptions} />
+          <FilterField label="Session type" value={filters.mode ?? ""} onChange={set("mode")} options={MODES} />
           {filtering && (
-            <button type="button" className="btn btn-indigo btn-sm" onClick={() => setFilters(EMPTY_FILTERS)}>
-              Show everyone
+            <button type="button" className="btn btn-line btn-sm filter-clear" onClick={() => setFilters(EMPTY_FILTERS)}>
+              Clear
             </button>
           )}
         </div>
-      )}
-      {items !== null && items.length > 0 && (
-        <div className="counsellor-grid">
-          {items.map((c) => <CounsellorCard key={c.id} c={c} />)}
-        </div>
-      )}
-    </section>
+
+        {error && <p className="form-error" role="alert">{error}</p>}
+        {!error && items === null && <p className="muted-center">Loading counsellors…</p>}
+
+        {items !== null && (
+          <div className="counsellors-meta">
+            <p className="result-line">
+              {items.length === 0
+                ? "No counsellors match these filters"
+                : "Browse profiles and book when you are ready"}
+            </p>
+            <span className="counsellors-count">{countLabel}</span>
+          </div>
+        )}
+
+        {items !== null && items.length === 0 && (
+          <div className="empty-state">
+            <p>Try another language, speciality, or session type.</p>
+            {filtering && (
+              <button type="button" className="btn btn-indigo btn-sm" onClick={() => setFilters(EMPTY_FILTERS)}>
+                Show everyone
+              </button>
+            )}
+          </div>
+        )}
+
+        {items !== null && items.length > 0 && (
+          <div className="counsellors-grid">
+            {items.map((c) => <CounsellorCard key={c.id} c={c} />)}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

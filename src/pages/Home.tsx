@@ -4,7 +4,6 @@ import { api, type CounsellorSummary } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import CounsellorCard from "../components/CounsellorCard";
 import { Mandala, Stars } from "../components/Decor";
-import Footer from "../components/Footer";
 
 // Simple line icons: each icon is a list of SVG path strings (24x24 grid).
 const ICONS = {
@@ -202,8 +201,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </>
   );
 }

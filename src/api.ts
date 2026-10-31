@@ -143,6 +143,33 @@ export interface NewCounsellor {
   designation: string;
 }
 
+export interface AdminUserRow {
+  id: number;
+  full_name: string;
+  email: string;
+  role: Role;
+  created_at: string;
+}
+
+export interface AdminAnalytics {
+  generated_at: string;
+  users: { total: number; clients: number; counsellors: number; admins: number };
+  counsellors: { total: number; published: number; draft: number; verified: number };
+  appointments: {
+    total: number;
+    upcoming: number;
+    this_month: number;
+    last_7_days: number;
+    by_status: Record<string, number>;
+  };
+  top_counsellors: Array<{
+    counsellor_id: number;
+    full_name: string;
+    slug: string;
+    bookings: number;
+  }>;
+}
+
 export interface AdminCounsellorUpdate {
   status?: "draft" | "published";
   is_verified?: boolean;
@@ -320,6 +347,10 @@ export const api = {
 
   // ----- Admin -----
   admin: {
+    analytics: () => request<{ analytics: AdminAnalytics }>("/api/v1/admin/analytics"),
+    users: {
+      list: () => request<{ users: AdminUserRow[] }>("/api/v1/admin/users"),
+    },
     counsellors: {
       list: () => request<{ counsellors: CounsellorAdmin[] }>("/api/v1/admin/counsellors"),
       create: (values: NewCounsellor) =>
