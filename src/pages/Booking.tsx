@@ -17,7 +17,6 @@ import {
   loadBookingDraft,
   pickSlotFromDraft,
   saveBookingDraft,
-  type BookingDraftGender,
   type BookingDraftStep,
 } from "../lib/bookingDraft";
 import { offeredSessions, previewItems } from "../lib/counsellor";
@@ -39,6 +38,12 @@ const TRUST = [
 ];
 
 type Step = 1 | 2 | 3;
+
+interface DetailResult {
+  slug: string;
+  counsellor: CounsellorDetail | null;
+  error: string | null;
+}
 
 function topicFromSegment(segment: string | null): string {
   return TOPICS.some((t) => t.id === segment) ? segment! : TOPICS[0].id;
@@ -74,17 +79,6 @@ function initialField(
   return pick(draft!);
 }
 
-function initialGender(
-  routeSlug: string | undefined,
-  rescheduleId: number | null,
-  isHub: boolean,
-): "female" | "male" | "other" {
-  const draft = loadBookingDraft(bookingDraftKey(routeSlug, rescheduleId));
-  if (!draftMatches(draft, routeSlug, rescheduleId, isHub)) return "female";
-  const g = draft!.gender;
-  return g === "male" || g === "other" ? g : "female";
-}
-
 export default function Booking() {
   const { slug: routeSlug } = useParams<{ slug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -95,12 +89,13 @@ export default function Booking() {
   const draftKey = useMemo(() => bookingDraftKey(routeSlug, rescheduleId), [routeSlug, rescheduleId]);
 
   const [step, setStep] = useState<Step>(() => initialStep(routeSlug, rescheduleId, isHub));
-  const [topic, setTopic] = useState(() => topicFromSegment(searchParams.get("segment")));
+  const topic = topicFromSegment(searchParams.get("segment"));
   const [roster, setRoster] = useState<CounsellorSummary[]>([]);
-  const [counsellor, setCounsellor] = useState<CounsellorDetail | null>(null);
-  const [detailError, setDetailError] = useState<string | null>(null);
+  // The loaded counsellor is stored together with the slug it belongs to, so "loading" and
+  // "error" are derived from the current URL instead of being set inside effects.
+  const [detailResult, setDetailResult] = useState<DetailResult | null>(null);
+  const [detailRefresh, setDetailRefresh] = useState(0);
   const [rosterError, setRosterError] = useState<string | null>(null);
-  const [detailLoading, setDetailLoading] = useState(Boolean(activeSlug));
   const [rosterLoading, setRosterLoading] = useState(isHub);
   const [selectedDate, setSelectedDate] = useState<string | null>(() =>
     initialField(routeSlug, rescheduleId, isHub, (d) => d.selectedDate ?? "", "") || null,
@@ -109,17 +104,18 @@ export default function Booking() {
     initialField(routeSlug, rescheduleId, isHub, (d) => d.selectedTime ?? "", "") || null,
   );
   const [note, setNote] = useState(() => initialField(routeSlug, rescheduleId, isHub, (d) => d.note));
-  const [phone, setPhone] = useState(() => initialField(routeSlug, rescheduleId, isHub, (d) => d.phone));
-  const [age, setAge] = useState(() => initialField(routeSlug, rescheduleId, isHub, (d) => d.age));
-  const [gender, setGender] = useState<BookingDraftGender>(() => initialGender(routeSlug, rescheduleId, isHub));
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [confirmed, setConfirmed] = useState<Appointment | null>(null);
   const [counsellorSearch, setCounsellorSearch] = useState("");
 
+  const detailCurrent = activeSlug && detailResult?.slug === activeSlug ? detailResult : null;
+  const counsellor = detailCurrent?.counsellor ?? null;
+  const detailError = detailCurrent?.error ?? null;
+  const detailLoading = Boolean(activeSlug) && detailCurrent === null;
+
   const setTopicAndUrl = useCallback(
     (id: string) => {
-      setTopic(id);
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -149,15 +145,8 @@ export default function Booking() {
   }, [draftKey, isHub, rescheduleId, routeSlug, searchParams, setSearchParams]);
 
   useEffect(() => {
-    const segment = searchParams.get("segment");
-    setTopic(topicFromSegment(segment));
-  }, [searchParams]);
-
-  useEffect(() => {
     if (!isHub) return;
     let cancelled = false;
-    setRosterLoading(true);
-    setRosterError(null);
     api.counsellors
       .list({ mode: "online" })
       .then(({ counsellors }) => {
@@ -175,20 +164,13 @@ export default function Booking() {
   }, [isHub]);
 
   useEffect(() => {
-    if (!activeSlug) {
-      setCounsellor(null);
-      setDetailLoading(false);
-      setDetailError(null);
-      return;
-    }
+    if (!activeSlug) return;
     let cancelled = false;
-    setDetailLoading(true);
-    setDetailError(null);
     api.counsellors
       .get(activeSlug)
       .then(({ counsellor: c }) => {
         if (cancelled) return;
-        setCounsellor(c);
+        setDetailResult({ slug: activeSlug, counsellor: c, error: null });
         const draft = loadBookingDraft(draftKey);
         const useDraft = draftMatches(draft, routeSlug, rescheduleId, isHub) && draft!.counsellorSlug === c.slug;
         const { date, time } = useDraft
@@ -201,18 +183,17 @@ export default function Booking() {
         }
       })
       .catch((err) => {
-        if (!cancelled) {
-          setCounsellor(null);
-          setDetailError(errorMessages(err, "Could not load counsellor")[0] ?? "Could not load counsellor.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setDetailLoading(false);
+        if (cancelled) return;
+        setDetailResult({
+          slug: activeSlug,
+          counsellor: null,
+          error: errorMessages(err, "Could not load counsellor")[0] ?? "Could not load counsellor.",
+        });
       });
     return () => {
       cancelled = true;
     };
-  }, [activeSlug, draftKey, isHub, rescheduleId, routeSlug]);
+  }, [activeSlug, draftKey, isHub, rescheduleId, routeSlug, detailRefresh]);
 
   useEffect(() => {
     if (confirmed) return;
@@ -229,9 +210,6 @@ export default function Booking() {
         selectedDate: null,
         selectedTime: null,
         note,
-        phone,
-        age,
-        gender,
       });
       return;
     }
@@ -244,20 +222,14 @@ export default function Booking() {
       selectedDate,
       selectedTime,
       note,
-      phone,
-      age,
-      gender,
     });
   }, [
     activeSlug,
-    age,
     confirmed,
     counsellor?.slug,
     draftKey,
-    gender,
     isHub,
     note,
-    phone,
     rescheduleId,
     selectedDate,
     selectedTime,
@@ -315,7 +287,6 @@ export default function Booking() {
       },
       { replace: true },
     );
-    setCounsellor(null);
     setSelectedDate(null);
     setSelectedTime(null);
     setStep(1);
@@ -352,6 +323,7 @@ export default function Booking() {
       if (err instanceof ApiError && err.status === 409) {
         setFormErrors(["That time is no longer available. Please pick another slot."]);
         setStep(1);
+        setDetailRefresh((k) => k + 1); // reload availability so the taken slot disappears
       } else {
         setFormErrors(errorMessages(err, "Could not complete booking"));
       }
@@ -488,6 +460,12 @@ export default function Booking() {
         {rosterError && isHub && (
           <div className="form-error" role="alert" style={{ marginBottom: 16 }}>
             {rosterError}
+          </div>
+        )}
+
+        {step === 1 && formErrors.length > 0 && (
+          <div className="form-error" role="alert">
+            {formErrors.map((msg) => <div key={msg}>{msg}</div>)}
           </div>
         )}
 
@@ -687,7 +665,10 @@ export default function Booking() {
                       type="button"
                       className="btn btn-gold"
                       disabled={!canAdvance()}
-                      onClick={() => setStep(2)}
+                      onClick={() => {
+                        setFormErrors([]);
+                        setStep(2);
+                      }}
                     >
                       Continue
                     </button>
@@ -701,37 +682,11 @@ export default function Booking() {
 
         {step === 2 && counsellor && (
           <div className="book-panel book-panel--step">
-            <h2>Tell us a little about you</h2>
+            <h2>Anything you would like your counsellor to know?</h2>
             <p className="book-note" style={{ marginTop: 0, marginBottom: 16 }}>
-              Signed in as <b>{user?.full_name}</b> ({user?.email}). Extra fields help your counsellor prepare; only your
-              session note is sent to our server today.
+              Signed in as <b>{user?.full_name}</b> ({user?.email}). Your note is shared only with your counsellor.
             </p>
             <form className="book-form" onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
-              <div className="book-row book-row--contact">
-                <label>
-                  Mobile number
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 …" inputMode="tel" />
-                </label>
-                <label>
-                  Age
-                  <input value={age} onChange={(e) => setAge(e.target.value)} placeholder="25" inputMode="numeric" />
-                </label>
-              </div>
-              <label>
-                Gender
-                <div className="book-toggle" role="group" aria-label="Gender">
-                  {(["female", "male", "other"] as const).map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      aria-pressed={gender === g}
-                      onClick={() => setGender(g)}
-                    >
-                      {g === "other" ? "Other" : g.charAt(0).toUpperCase() + g.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </label>
               <label>
                 What would you like to focus on? (saved as session note)
                 <textarea

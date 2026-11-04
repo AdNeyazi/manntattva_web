@@ -31,8 +31,8 @@ export default function AdminAppointments() {
 
       {error && <div className="form-error" role="alert">{error}</div>}
 
-      <div className="admin-panel">
-        <label className="filter-field" style={{ maxWidth: 220 }}>
+      <div className="admin-panel admin-panel--toolbar">
+        <label className="filter-field" style={{ maxWidth: 220, margin: 0 }}>
           <span>Status</span>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="all">All</option>
@@ -42,6 +42,11 @@ export default function AdminAppointments() {
             <option value="no_show">No show</option>
           </select>
         </label>
+        {filtered && (
+          <span className="admin-table-count">
+            {filtered.length} {filtered.length === 1 ? "row" : "rows"}
+          </span>
+        )}
       </div>
 
       {filtered === null && !error && <p className="muted-center">Loading appointments…</p>}
@@ -51,29 +56,54 @@ export default function AdminAppointments() {
       )}
 
       {filtered && filtered.length > 0 && (
-        <ul className="dash-sessions">
-          {filtered.map((a) => (
-            <li key={a.id} className="dash-session">
-              <div className="dash-session-body">
-                <h3>
-                  {a.student?.full_name ?? "Client"} with {a.counsellor.full_name}
-                </h3>
-                {a.student?.email && <p className="dash-session-meta">{a.student.email}</p>}
-                <p className="dash-session-when">{formatSessionWhen(a.starts_at, a.timezone)}</p>
-                <div className="dash-session-tags">
-                  <span className="dash-tag">{a.status.replace("_", " ")}</span>
-                  <span className="dash-tag dash-tag--mode">{a.payment_status.replace("_", " ")}</span>
-                </div>
-                {a.note && <p className="dash-session-note"><b>Note:</b> {a.note}</p>}
-              </div>
-              <div className="dash-session-actions">
-                <Link className="btn btn-sm btn-line" to={`/counsellors/${a.counsellor.slug}`}>
-                  Counsellor
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="admin-panel admin-panel--flush">
+          <div className="admin-table-scroll">
+            <table className="admin-appt-table">
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Client</th>
+                  <th>Counsellor</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Note</th>
+                  <th aria-label="Actions" />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((a) => (
+                  <tr key={a.id}>
+                    <td className="admin-appt-when">{formatSessionWhen(a.starts_at, a.timezone)}</td>
+                    <td>
+                      <b>{a.student?.full_name ?? "—"}</b>
+                      {a.student?.email && (
+                        <span className="admin-appt-sub">{a.student.email}</span>
+                      )}
+                    </td>
+                    <td>
+                      <b>{a.counsellor.full_name}</b>
+                      {a.counsellor.designation && (
+                        <span className="admin-appt-sub">{a.counsellor.designation}</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="dash-tag">{a.status.replace("_", " ")}</span>
+                    </td>
+                    <td>
+                      <span className="dash-tag dash-tag--mode">{a.payment_status.replace("_", " ")}</span>
+                    </td>
+                    <td className="admin-appt-note">{a.note ? a.note : "—"}</td>
+                    <td className="admin-appt-link">
+                      <Link className="card-link" to={`/counsellors/${a.counsellor.slug}`}>
+                        Profile
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </>
   );
