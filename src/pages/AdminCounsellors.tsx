@@ -78,8 +78,9 @@ export default function AdminCounsellors() {
   }
 
   return (
-    <section className="page container">
-      <header className="page-head">
+    <>
+      <header className="admin-page-head">
+        <span className="eyebrow eyebrow--light">Admin</span>
         <h1>Manage counsellors</h1>
         <p>Create counsellor logins and control who is published and verified.</p>
       </header>
@@ -117,6 +118,6 @@ export default function AdminCounsellors() {
           </table>
         )}
       </div>
-    </section>
+    </>
   );
 }

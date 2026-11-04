@@ -1,0 +1,191 @@
+/* Counsellor card — portrait-forward listing tile */
+.c-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-align: left;
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--lavender-100);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(30, 26, 92, 0.07);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.c-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--gold-400), var(--night-700));
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.c-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 50px rgba(30, 26, 92, 0.14);
+  border-color: rgba(201, 189, 235, 0.9);
+}
+
+.c-card:hover::before {
+  opacity: 1;
+}
+
+.c-card:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 3px;
+}
+
+.c-card-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 168px;
+  padding: 28px 24px 20px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(240, 208, 138, 0.35), transparent 55%),
+    linear-gradient(165deg, var(--night-800) 0%, var(--night-950) 100%);
+}
+
+.c-card-media img,
+.c-card-media .c-card-avatar {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.12), 0 0 0 7px var(--gold-400);
+}
+
+.c-card-avatar {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--gold-300);
+  background: linear-gradient(145deg, var(--night-700), var(--night-900));
+}
+
+.c-card-verified {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #1e6b4a;
+  background: #e3f4ea;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.c-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 20px 22px 22px;
+  gap: 8px;
+}
+
+.c-card-body h3 {
+  font-size: 1.45rem;
+  color: var(--night-800);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.c-card-role {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--night-700);
+  line-height: 1.35;
+}
+
+.c-card-edu {
+  font-size: 0.82rem;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.c-card-meta {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 0;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.c-card-meta li:not(:last-child)::after {
+  content: "·";
+  margin: 0 8px;
+  color: var(--lavender-300);
+}
+
+.c-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.c-card-tags span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--night-700);
+  background: var(--lavender-100);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.c-card-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.c-card-modes span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--night-700);
+  border: 1px solid var(--lavender-300);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.c-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 16px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--night-700);
+}
+
+.c-card-cta::after {
+  content: "→";
+  transition: transform 0.18s ease;
+}
+
+.c-card:hover .c-card-cta {
+  color: var(--gold-500);
+}
+
+.c-card:hover .c-card-cta::after {
+  transform: translateX(4px);
+}

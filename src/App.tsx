@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import SiteFooter from "./components/SiteFooter";
 import ProtectedRoute from "./auth/ProtectedRoute";
+import AdminLayout from "./admin/AdminLayout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -11,8 +13,13 @@ import CounsellorProfile from "./pages/CounsellorProfile";
 import Booking from "./pages/Booking";
 import MyProfile from "./pages/MyProfile";
 import AdminCounsellors from "./pages/AdminCounsellors";
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminAppointments from "./pages/admin/AdminAppointments";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminLookups from "./pages/admin/AdminLookups";
+import AdminSettings from "./pages/admin/AdminSettings";
 
-// React Router does not scroll to #anchors by itself, so links like "/#services" need this.
 function ScrollToHash() {
   const { pathname, hash } = useLocation();
   useEffect(() => {
@@ -46,9 +53,21 @@ export default function App() {
         />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/my/profile" element={<ProtectedRoute roles={["counsellor"]}><MyProfile /></ProtectedRoute>} />
-        <Route path="/admin/counsellors" element={<ProtectedRoute roles={["admin"]}><AdminCounsellors /></ProtectedRoute>} />
+        <Route
+          path="/admin"
+          element={<ProtectedRoute roles={["admin"]}><AdminLayout /></ProtectedRoute>}
+        >
+          <Route index element={<AdminOverview />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="counsellors" element={<AdminCounsellors />} />
+          <Route path="appointments" element={<AdminAppointments />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="lookups" element={<AdminLookups />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
         <Route path="*" element={<p className="center-note">Page not found.</p>} />
       </Routes>
+      <SiteFooter />
     </>
   );
 }

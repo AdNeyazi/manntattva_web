@@ -175,6 +175,7 @@ export default function CounsellorProfile() {
 
   return (
     <section className="cprofile">
+      <div className="cprofile-banner" aria-hidden="true" />
       <div className="cprofile-wrap">
         <nav className="cprofile-crumb" aria-label="Breadcrumb">
           <Link to="/">Home</Link>
@@ -186,7 +187,7 @@ export default function CounsellorProfile() {
 
         <Link className="cprofile-back" to="/counsellors">← All counsellors</Link>
 
-        <div className="cprofile-hero">
+        <header className="cprofile-hero">
           <div className="cprofile-hero-top">
             <div className="cprofile-portrait">
               {c.photo_url ? <img src={c.photo_url} alt="" /> : <span className="cprofile-initials" aria-hidden="true">{initials(c.full_name)}</span>}
@@ -206,101 +207,115 @@ export default function CounsellorProfile() {
                   {focus.hidden > 0 && <span>+{focus.hidden}</span>}
                 </div>
               )}
+
+              {c.bio && <p className="cprofile-excerpt">{c.bio}</p>}
+
+              {modes.length > 0 && (
+                <div className="cprofile-modes">
+                  {modes.map((mode) => (
+                    <span key={mode}><Icon d={ICONS.chat} />{mode}</span>
+                  ))}
+                </div>
+              )}
+
+              {c.next_available_at && (
+                <p className="cprofile-next">Next available: {formatWhen(c.next_available_at, c.timezone)}</p>
+              )}
+
+              {links.length > 0 && (
+                <div className="cprofile-social">
+                  {links.map(([name, url]) => (
+                    <a key={name} href={url} target="_blank" rel="noopener noreferrer">{name}</a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {c.bio && <p className="cprofile-excerpt">{c.bio}</p>}
-
-          {modes.length > 0 && (
-            <div className="cprofile-modes">
-              {modes.map((mode) => (
-                <span key={mode}><Icon d={ICONS.chat} />{mode}</span>
-              ))}
+          {(c.specializations.length > 0 || c.languages.length > 0 || modes.length > 0) && (
+            <div className="cprofile-stats">
+              {c.specializations.length > 0 && (
+                <div className="cprofile-stat">
+                  <span className="cprofile-stat-icon"><Icon d={ICONS.spark} /></span>
+                  <span><b>{c.specializations.length}</b><small>Specializations</small></span>
+                </div>
+              )}
+              {c.languages.length > 0 && (
+                <div className="cprofile-stat">
+                  <span className="cprofile-stat-icon"><Icon d={ICONS.chat} /></span>
+                  <span><b>{c.languages.length}</b><small>Languages</small></span>
+                </div>
+              )}
+              {modes.length > 0 && (
+                <div className="cprofile-stat">
+                  <span className="cprofile-stat-icon"><Icon d={ICONS.person} /></span>
+                  <span><b>{modes.length}</b><small>Session modes</small></span>
+                </div>
+              )}
             </div>
           )}
 
-          {c.next_available_at && (
-            <p className="cprofile-next">Next available: {formatWhen(c.next_available_at, c.timezone)}</p>
-          )}
+          {c.languages.length > 0 && <p className="cprofile-speaks">Speaks: {c.languages.join(", ")}</p>}
+        </header>
 
-          <div className="cprofile-actions"><BookAction firstName={firstName} slug={c.slug} /></div>
-
-          {links.length > 0 && (
-            <div className="cprofile-social">
-              {links.map(([name, url]) => (
-                <a key={name} href={url} target="_blank" rel="noopener noreferrer">{name}</a>
-              ))}
+        <div className="cprofile-layout">
+          <div className="cprofile-main">
+            <div className="cprofile-blocks">
+              {c.bio && <Block icon={ICONS.person} title="About"><p>{c.bio}</p></Block>}
+              {c.methodology && <Block icon={ICONS.spark} title="Approach & methodology"><p>{c.methodology}</p></Block>}
+              {(c.educations?.length ?? 0) > 0 ? (
+                <Block icon={ICONS.book} title="Education"><Timeline items={c.educations} /></Block>
+              ) : c.education ? (
+                <Block icon={ICONS.book} title="Education"><p className="cprofile-edu">{c.education}</p></Block>
+              ) : null}
+              {(c.experiences?.length ?? 0) > 0 && (
+                <Block icon={ICONS.person} title="Clinical experience"><Timeline items={c.experiences} /></Block>
+              )}
+              {c.specializations.length > 0 && (
+                <Block icon={ICONS.spark} title="Specialises in">
+                  <div className="cprofile-tags">
+                    {c.specializations.map((name) => <span key={name}>{name}</span>)}
+                  </div>
+                </Block>
+              )}
+              {c.certifications.length > 0 && (
+                <Block icon={ICONS.check} title="Certifications">
+                  <ul className="cprofile-certs">
+                    {c.certifications.map((cert, i) => (
+                      <li key={`${cert.title}-${i}`}>
+                        <i aria-hidden="true">✓</i>
+                        <span>
+                          <b>{cert.title}</b>
+                          {(cert.issuer || cert.year) && (
+                            <span> · {[cert.issuer, cert.year].filter(Boolean).join(", ")}</span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Block>
+              )}
+              <Availability key={c.slug} counsellor={c} />
             </div>
-          )}
-        </div>
 
-        {(c.specializations.length > 0 || c.languages.length > 0 || modes.length > 0) && (
-          <div className="cprofile-stats">
-            {c.specializations.length > 0 && (
-              <div className="cprofile-stat">
-                <span className="cprofile-stat-icon"><Icon d={ICONS.spark} /></span>
-                <span><b>{c.specializations.length}</b><small>Specializations</small></span>
-              </div>
-            )}
-            {c.languages.length > 0 && (
-              <div className="cprofile-stat">
-                <span className="cprofile-stat-icon"><Icon d={ICONS.chat} /></span>
-                <span><b>{c.languages.length}</b><small>Languages</small></span>
-              </div>
-            )}
-            {modes.length > 0 && (
-              <div className="cprofile-stat">
-                <span className="cprofile-stat-icon"><Icon d={ICONS.person} /></span>
-                <span><b>{modes.length}</b><small>Session modes</small></span>
-              </div>
-            )}
+            <div className="cprofile-cta">
+              <h2>Ready to start your journey?</h2>
+              <p>Take the first step. Book a session with {firstName} in a few clicks.</p>
+              <BookAction firstName={firstName} slug={c.slug} />
+            </div>
           </div>
-        )}
 
-        {c.languages.length > 0 && <p className="cprofile-speaks">Speaks: {c.languages.join(", ")}</p>}
-
-        <div className="cprofile-blocks">
-          {c.bio && <Block icon={ICONS.person} title="About"><p>{c.bio}</p></Block>}
-          {c.methodology && <Block icon={ICONS.spark} title="Approach & methodology"><p>{c.methodology}</p></Block>}
-          {(c.educations?.length ?? 0) > 0 ? (
-            <Block icon={ICONS.book} title="Education"><Timeline items={c.educations} /></Block>
-          ) : c.education ? (
-            <Block icon={ICONS.book} title="Education"><p className="cprofile-edu">{c.education}</p></Block>
-          ) : null}
-          {(c.experiences?.length ?? 0) > 0 && (
-            <Block icon={ICONS.person} title="Clinical experience"><Timeline items={c.experiences} /></Block>
-          )}
-          {c.specializations.length > 0 && (
-            <Block icon={ICONS.spark} title="Specialises in">
-              <div className="cprofile-tags">
-                {c.specializations.map((name) => <span key={name}>{name}</span>)}
-              </div>
-            </Block>
-          )}
-          {c.certifications.length > 0 && (
-            <Block icon={ICONS.check} title="Certifications">
-              <ul className="cprofile-certs">
-                {c.certifications.map((cert, i) => (
-                  <li key={`${cert.title}-${i}`}>
-                    <i aria-hidden="true">✓</i>
-                    <span>
-                      <b>{cert.title}</b>
-                      {(cert.issuer || cert.year) && (
-                        <span> · {[cert.issuer, cert.year].filter(Boolean).join(", ")}</span>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Block>
-          )}
-          <Availability key={c.slug} counsellor={c} />
-        </div>
-
-        <div className="cprofile-cta">
-          <h2>Ready to start your journey?</h2>
-          <p>Take the first step. Book a session with {firstName} in a few clicks.</p>
-          <BookAction firstName={firstName} slug={c.slug} />
+          <aside className="cprofile-rail">
+            <div className="cprofile-rail-card">
+              <p className="cprofile-rail-label">Session booking</p>
+              <BookAction firstName={firstName} slug={c.slug} />
+              {c.next_available_at && (
+                <p className="cprofile-rail-when">
+                  Next slot: {formatWhen(c.next_available_at, c.timezone)}
+                </p>
+              )}
+            </div>
+          </aside>
         </div>
       </div>
     </section>

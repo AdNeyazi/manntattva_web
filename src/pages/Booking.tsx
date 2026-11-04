@@ -405,7 +405,15 @@ export default function Booking() {
 
   return (
     <section className="book-page">
+      <div className="book-banner" aria-hidden="true" />
       <div className="book-wrap">
+        <header className="book-header">
+          <div>
+            <p className="book-header-eyebrow">Book a session</p>
+            <h1>{rescheduleId ? "Reschedule your session" : isHub ? "Choose time & counsellor" : "Schedule with your counsellor"}</h1>
+          </div>
+        </header>
+
         <nav className="book-crumb" aria-label="Breadcrumb">
           <Link to="/">Home</Link>
           <span aria-hidden="true">/</span>
@@ -426,8 +434,14 @@ export default function Booking() {
           )}
         </nav>
 
-        <div className="book-progress">
-          <div className="book-steps" aria-label="Booking steps">
+        <div className="book-progress" aria-label="Booking progress">
+          <div className="book-progress-track">
+            <div
+              className="book-progress-fill"
+              style={{ width: `${((step - 1) / (stepLabels.length - 1)) * 100}%` }}
+            />
+          </div>
+          <div className="book-steps">
             {stepLabels.map((label, index) => {
               const n = (index + 1) as Step;
               const active = step === n;
@@ -438,7 +452,7 @@ export default function Booking() {
                   className={`book-step${active ? " book-step--active" : ""}${doneStep ? " book-step--done" : ""}`}
                 >
                   <span>{doneStep ? "✓" : n}</span>
-                  {label}
+                  <span className="book-step-label">{label}</span>
                 </div>
               );
             })}
@@ -481,11 +495,18 @@ export default function Booking() {
           <div className="book-grid">
             <div className="book-hero">
               <div className="book-hero-art">
+                <span className="book-hero-badge">Manntattva</span>
                 <p>
                   Healing is not linear, but every step is progress. <em>Start yours today.</em>
                 </p>
+                <ul className="book-hero-points">
+                  <li>Private & confidential</li>
+                  <li>Verified practitioners</li>
+                  <li>Flexible scheduling</li>
+                </ul>
               </div>
             </div>
+            <div className="book-shell">
             <div className="book-side">
               {isHub && !counsellor && !detailLoading && (
                 <div className="book-panel book-choose">
@@ -493,13 +514,27 @@ export default function Booking() {
                     <h2>Choose your counsellor</h2>
                     <span className="book-choose-optional">Pick one to see times</span>
                   </div>
-                  <input
-                    type="search"
-                    className="book-search"
-                    placeholder="Search by name, specialty, or language…"
-                    value={counsellorSearch}
-                    onChange={(e) => setCounsellorSearch(e.target.value)}
-                  />
+                  <div className="book-search-field">
+                    <svg
+                      className="book-search-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
+                    </svg>
+                    <input
+                      type="search"
+                      className="book-search"
+                      placeholder="Search by name, specialty, or language…"
+                      value={counsellorSearch}
+                      onChange={(e) => setCounsellorSearch(e.target.value)}
+                      aria-label="Search counsellors"
+                    />
+                  </div>
                   <div className="book-choose-grid">
                     {filteredRoster.map((c) => {
                       const modes = offeredSessions(c);
@@ -660,11 +695,12 @@ export default function Booking() {
                 </>
               )}
             </div>
+            </div>
           </div>
         )}
 
         {step === 2 && counsellor && (
-          <div className="book-panel">
+          <div className="book-panel book-panel--step">
             <h2>Tell us a little about you</h2>
             <p className="book-note" style={{ marginTop: 0, marginBottom: 16 }}>
               Signed in as <b>{user?.full_name}</b> ({user?.email}). Extra fields help your counsellor prepare; only your
@@ -714,7 +750,7 @@ export default function Booking() {
         )}
 
         {step === 3 && counsellor && (
-          <form className="book-panel" onSubmit={onConfirm}>
+          <form className="book-panel book-panel--step" onSubmit={onConfirm}>
             <h2>Review & confirm</h2>
             <div className="book-chips" role="group" aria-label="Session length">
               <button type="button" aria-pressed={true}>
