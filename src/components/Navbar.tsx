@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import "./Navbar.css";
@@ -32,15 +32,16 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPath, setMenuPath] = useState<string | null>(null);
+  const menuOpen = menuPath === pathname;
+  const setMenuOpen = (next: boolean | ((open: boolean) => boolean)) => {
+    const value = typeof next === "function" ? next(menuOpen) : next;
+    setMenuPath(value ? pathname : null);
+  };
 
   const dark = DARK_OVERLAY.includes(pathname);
   const home = pathname === "/";
   const band = !dark && !home && isBandRoute(pathname);
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
 
   async function handleLogout() {
     await logout();

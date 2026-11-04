@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { api, errorMessages, type Appointment, type Role } from "../api";
 import { useAuth } from "../auth/AuthContext";
@@ -72,7 +72,7 @@ function SessionCard({
   const meta = sessionMeta(a, role);
   const chip = sessionDateChip(a.starts_at, a.timezone);
   const showJoin = !past && a.meeting_link && (role === "counsellor" || role === "end_user");
-  const showNote = a.note && role !== "end_user";
+  const showNote = a.note && role === "counsellor";
 
   return (
     <li className={`dash-session${past ? " dash-session--past" : ""}`}>
@@ -140,29 +140,36 @@ export default function Dashboard() {
   const [errors, setErrors] = useState<string[]>([]);
   const [busyId, setBusyId] = useState<number | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setErrors([]);
-    try {
-      const { appointments: list } = await api.appointments.list();
-      setAppointments(list);
-    } catch (err) {
-      setErrors(errorMessages(err, "Could not load appointments"));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [reloadKey, setReloadKey] = useState(0);
+  // Frozen once per mount so "upcoming" is stable across re-renders (and render stays pure).
+  const [now] = useState(() => Date.now());
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    api.appointments
+      .list()
+      .then(({ appointments: list }) => {
+        if (cancelled) return;
+        setAppointments(list);
+        setErrors([]);
+      })
+      .catch((err) => {
+        if (!cancelled) setErrors(errorMessages(err, "Could not load appointments"));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
   async function cancel(id: number) {
     setBusyId(id);
     setErrors([]);
     try {
       await api.appointments.cancel(id);
-      await load();
+      setReloadKey((k) => k + 1);
     } catch (err) {
       setErrors(errorMessages(err, "Could not cancel session"));
     } finally {
@@ -173,9 +180,9 @@ export default function Dashboard() {
   const upcoming = useMemo(
     () =>
       appointments.filter(
-        (a) => a.status === "confirmed" && new Date(a.starts_at).getTime() > Date.now(),
+        (a) => a.status === "confirmed" && new Date(a.starts_at).getTime() > now,
       ),
-    [appointments],
+    [appointments, now],
   );
 
   const past = useMemo(

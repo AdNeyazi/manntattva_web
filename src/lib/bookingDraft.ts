@@ -2,7 +2,6 @@ const STORAGE_PREFIX = "manntattva_booking_draft";
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export type BookingDraftStep = 1 | 2 | 3;
-export type BookingDraftGender = "female" | "male" | "other";
 
 export interface BookingDraft {
   v: 1;
@@ -14,9 +13,6 @@ export interface BookingDraft {
   selectedDate: string | null;
   selectedTime: string | null;
   note: string;
-  phone: string;
-  age: string;
-  gender: BookingDraftGender;
   updatedAt: number;
 }
 
@@ -30,10 +26,6 @@ function isStep(value: number): value is BookingDraftStep {
   return value === 1 || value === 2 || value === 3;
 }
 
-function isGender(value: string): value is BookingDraftGender {
-  return value === "female" || value === "male" || value === "other";
-}
-
 export function loadBookingDraft(key: string): BookingDraft | null {
   try {
     const raw = sessionStorage.getItem(key);
@@ -44,7 +36,6 @@ export function loadBookingDraft(key: string): BookingDraft | null {
       sessionStorage.removeItem(key);
       return null;
     }
-    if (!isGender(data.gender)) data.gender = "female";
     return data;
   } catch {
     return null;

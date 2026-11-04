@@ -219,6 +219,221 @@
   background: var(--lavender-100);
 }
 
+/* Counsellor management cards */
+.admin-c-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.admin-c-card {
+  background: #fff;
+  border: 1px solid var(--lavender-100);
+  border-radius: 22px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 10px 28px rgba(30, 26, 92, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-c-card-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.admin-c-card-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--gold-300);
+}
+
+.admin-c-card-photo--initials {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--gold-300);
+  background: linear-gradient(145deg, var(--night-700), var(--night-900));
+}
+
+.admin-c-card-id b {
+  display: block;
+  color: var(--night-800);
+  font-size: 1.05rem;
+}
+
+.admin-c-card-id .fine {
+  display: block;
+  margin-top: 2px;
+}
+
+.admin-c-card-role {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--night-700);
+}
+
+.admin-c-card-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--lavender-100);
+  color: var(--night-700);
+}
+
+.admin-c-card-pill--published {
+  background: #e3f4ea;
+  color: #1e6b4a;
+}
+
+.admin-c-card-pill--draft {
+  background: #fff8eb;
+  color: var(--night-800);
+}
+
+.admin-c-card-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.admin-c-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.admin-c-field select,
+.admin-c-field input {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  font-size: 0.92rem;
+}
+
+.admin-c-field--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-c-field--check .check {
+  min-height: 46px;
+  align-items: center;
+  padding: 0 12px;
+  border: 1.5px solid var(--lavender-300);
+  border-radius: 14px;
+  background: #fff;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.admin-c-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+/* Appointments table */
+.admin-panel--toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-panel--flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-table-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.admin-table-scroll {
+  overflow-x: auto;
+}
+
+.admin-appt-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 880px;
+}
+
+.admin-appt-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 14px 16px;
+  background: var(--lavender-100);
+  border-bottom: 1px solid var(--lavender-100);
+}
+
+.admin-appt-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--lavender-100);
+  vertical-align: top;
+  font-size: 0.92rem;
+}
+
+.admin-appt-table tbody tr:hover {
+  background: rgba(238, 233, 250, 0.35);
+}
+
+.admin-appt-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-appt-when {
+  font-weight: 600;
+  color: var(--night-800);
+  white-space: nowrap;
+}
+
+.admin-appt-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.admin-appt-note {
+  max-width: 200px;
+  color: var(--night-700);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.admin-appt-link {
+  text-align: right;
+  white-space: nowrap;
+}
+
 @media (max-width: 960px) {
   .admin-shell {
     grid-template-columns: 1fr;

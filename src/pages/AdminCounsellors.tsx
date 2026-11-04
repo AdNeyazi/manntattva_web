@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { api, errorMessages, type CounsellorAdmin, type NewCounsellor } from "../api";
+import { initials } from "../lib/text";
 
 const EMPTY: NewCounsellor = { full_name: "", email: "", password: "", designation: "" };
 
-function Row({ c, onSaved }: { c: CounsellorAdmin; onSaved: (updated: CounsellorAdmin) => void }) {
+function CounsellorCard({ c, onSaved }: { c: CounsellorAdmin; onSaved: (updated: CounsellorAdmin) => void }) {
   const [status, setStatus] = useState(c.status);
   const [verified, setVerified] = useState(c.is_verified);
   const [regNo, setRegNo] = useState(c.registration_no ?? "");
@@ -26,21 +28,57 @@ function Row({ c, onSaved }: { c: CounsellorAdmin; onSaved: (updated: Counsellor
   }
 
   return (
-    <tr>
-      <td><b>{c.full_name}</b><br /><span className="fine">{c.email}</span></td>
-      <td>
-        <select value={status} onChange={(e) => setStatus(e.target.value as CounsellorAdmin["status"])}>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-        </select>
-      </td>
-      <td><label className="check"><input type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} /> Verified</label></td>
-      <td><input value={regNo} placeholder="e.g. CRR: A12345" onChange={(e) => setRegNo(e.target.value)} /></td>
-      <td>
-        <button className="btn btn-sm btn-indigo" disabled={!dirty || busy} onClick={save}>{busy ? "Saving…" : "Save"}</button>
-        {error && <div className="form-error">{error}</div>}
-      </td>
-    </tr>
+    <article className="admin-c-card">
+      <div className="admin-c-card-head">
+        {c.photo_url ? (
+          <img className="admin-c-card-photo" src={c.photo_url} alt="" />
+        ) : (
+          <span className="admin-c-card-photo admin-c-card-photo--initials" aria-hidden="true">
+            {initials(c.full_name)}
+          </span>
+        )}
+        <div className="admin-c-card-id">
+          <b>{c.full_name}</b>
+          <span className="fine">{c.email}</span>
+          {c.designation && <span className="admin-c-card-role">{c.designation}</span>}
+        </div>
+        <span className={`admin-c-card-pill admin-c-card-pill--${c.status}`}>{c.status}</span>
+      </div>
+
+      <div className="admin-c-card-fields">
+        <label className="admin-c-field">
+          <span>Status</span>
+          <select value={status} onChange={(e) => setStatus(e.target.value as CounsellorAdmin["status"])}>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </label>
+        <label className="admin-c-field admin-c-field--check">
+          <span>Badge</span>
+          <span className="check">
+            <input type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} />
+            Verified
+          </span>
+        </label>
+        <label className="admin-c-field admin-c-field--wide">
+          <span>Registration no.</span>
+          <input value={regNo} placeholder="e.g. CRR: A12345" onChange={(e) => setRegNo(e.target.value)} />
+        </label>
+      </div>
+
+      {error && <div className="form-error">{error}</div>}
+
+      <div className="admin-c-card-actions">
+        <button type="button" className="btn btn-sm btn-indigo" disabled={!dirty || busy} onClick={() => void save()}>
+          {busy ? "Saving…" : "Save changes"}
+        </button>
+        {c.status === "published" && (
+          <Link className="btn btn-sm btn-line" to={`/counsellors/${c.slug}`}>
+            View profile
+          </Link>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -85,7 +123,7 @@ export default function AdminCounsellors() {
         <p>Create counsellor logins and control who is published and verified.</p>
       </header>
 
-      <form className="card form form-inline" onSubmit={onCreate}>
+      <form className="admin-panel form" onSubmit={onCreate}>
         <h2>Add a counsellor</h2>
         {errors.length > 0 && <div className="form-error" role="alert">{errors.map((m) => <div key={m}>{m}</div>)}</div>}
         {created && <div className="form-ok" role="status">{created}</div>}
@@ -95,29 +133,24 @@ export default function AdminCounsellors() {
           <label>First password<input required minLength={6} type="text" value={form.password} onChange={(e) => set("password")(e.target.value)} /></label>
           <label>Designation<input value={form.designation} onChange={(e) => set("designation")(e.target.value)} /></label>
         </div>
-        <button className="btn btn-indigo" disabled={busy}>{busy ? "Creating…" : "Create counsellor"}</button>
+        <button type="submit" className="btn btn-indigo" disabled={busy}>{busy ? "Creating…" : "Create counsellor"}</button>
       </form>
 
-      <div className="card table-wrap">
-        {items === null ? (
-          <p className="muted-center">Loading…</p>
-        ) : (
-          <table className="admin-table">
-            <thead>
-              <tr><th>Counsellor</th><th>Status</th><th>Badge</th><th>Registration no.</th><th /></tr>
-            </thead>
-            <tbody>
-              {items.map((c) => (
-                <Row
-                  key={`${c.id}-${c.status}-${c.is_verified}-${c.registration_no ?? ""}`}
-                  c={c}
-                  onSaved={(u) => setItems((list) => (list ?? []).map((x) => (x.id === u.id ? u : x)))}
-                />
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {items === null ? (
+        <p className="muted-center">Loading counsellors…</p>
+      ) : items.length === 0 ? (
+        <div className="admin-soon">No counsellors yet. Create one above.</div>
+      ) : (
+        <div className="admin-c-grid">
+          {items.map((c) => (
+            <CounsellorCard
+              key={`${c.id}-${c.status}-${c.is_verified}-${c.registration_no ?? ""}`}
+              c={c}
+              onSaved={(u) => setItems((list) => (list ?? []).map((x) => (x.id === u.id ? u : x)))}
+            />
+          ))}
+        </div>
+      )}
     </>
   );
 }
