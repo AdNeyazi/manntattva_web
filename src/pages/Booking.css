@@ -64,7 +64,7 @@
   background: #fff;
   border: 1px solid var(--lavender-100);
   border-radius: 22px;
-  box-shadow: 0 12px 36px rgba(30, 26, 92, 0.07);
+  box-shadow: 0 12px 36px rgba(58, 42, 24, 0.07);
 }
 
 .book-progress-track {
@@ -121,7 +121,7 @@
 .book-step--active span:first-child {
   background: var(--night-800);
   color: var(--gold-300);
-  box-shadow: 0 4px 14px rgba(30, 26, 92, 0.25);
+  box-shadow: 0 4px 14px rgba(58, 42, 24, 0.25);
 }
 
 .book-step--done span:first-child {
@@ -152,7 +152,7 @@
   text-align: center;
   font-size: 0.8rem;
   color: var(--muted);
-  box-shadow: 0 6px 18px rgba(30, 26, 92, 0.04);
+  box-shadow: 0 6px 18px rgba(58, 42, 24, 0.04);
 }
 
 .book-trust b {
@@ -193,7 +193,7 @@
   background: var(--night-800);
   border-color: var(--night-800);
   color: #fff;
-  box-shadow: 0 6px 18px rgba(30, 26, 92, 0.18);
+  box-shadow: 0 6px 18px rgba(58, 42, 24, 0.18);
 }
 
 .book-grid {
@@ -212,7 +212,7 @@
   border: 1px solid var(--lavender-100);
   border-radius: 26px;
   overflow: hidden;
-  box-shadow: 0 12px 36px rgba(30, 26, 92, 0.07);
+  box-shadow: 0 12px 36px rgba(58, 42, 24, 0.07);
   position: sticky;
   top: 88px;
   align-self: start;
@@ -278,7 +278,7 @@
   border: 1px solid var(--lavender-100);
   border-radius: 26px;
   padding: 18px;
-  box-shadow: 0 12px 36px rgba(30, 26, 92, 0.07);
+  box-shadow: 0 12px 36px rgba(58, 42, 24, 0.07);
 }
 
 .book-side {
@@ -356,7 +356,7 @@
   background: #fff;
   border: 1.5px solid var(--lavender-300);
   border-radius: 14px;
-  box-shadow: inset 0 1px 2px rgba(30, 26, 92, 0.04);
+  box-shadow: inset 0 1px 2px rgba(58, 42, 24, 0.04);
   transition: border-color 0.15s, box-shadow 0.15s;
   -webkit-appearance: none;
   appearance: none;
@@ -371,7 +371,7 @@
   outline: none;
   border-color: var(--gold-500);
   box-shadow:
-    inset 0 1px 2px rgba(30, 26, 92, 0.04),
+    inset 0 1px 2px rgba(58, 42, 24, 0.04),
     0 0 0 4px rgba(227, 182, 91, 0.28);
 }
 
@@ -415,7 +415,7 @@
 
 .book-pick-card:hover {
   border-color: var(--gold-400);
-  box-shadow: 0 8px 22px rgba(30, 26, 92, 0.08);
+  box-shadow: 0 8px 22px rgba(58, 42, 24, 0.08);
   transform: translateY(-2px);
 }
 
@@ -666,7 +666,7 @@
   background: var(--night-800);
   border-color: var(--night-800);
   color: #fff;
-  box-shadow: 0 8px 22px rgba(30, 26, 92, 0.2);
+  box-shadow: 0 8px 22px rgba(58, 42, 24, 0.2);
 }
 
 .book-date[aria-pressed="true"] small,
@@ -722,7 +722,7 @@
   border: 1px solid var(--lavender-100);
   border-radius: 26px;
   padding: 28px 26px;
-  box-shadow: 0 12px 36px rgba(30, 26, 92, 0.07);
+  box-shadow: 0 12px 36px rgba(58, 42, 24, 0.07);
 }
 
 .book-panel--step {
@@ -923,7 +923,7 @@
   background: #fff;
   border: 1px solid var(--lavender-100);
   border-radius: 26px;
-  box-shadow: 0 12px 36px rgba(30, 26, 92, 0.07);
+  box-shadow: 0 12px 36px rgba(58, 42, 24, 0.07);
 }
 
 .book-success h2 {

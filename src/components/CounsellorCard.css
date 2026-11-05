@@ -10,7 +10,7 @@
   border: 1px solid var(--lavender-100);
   border-radius: 26px;
   overflow: hidden;
-  box-shadow: 0 12px 36px rgba(30, 26, 92, 0.07);
+  box-shadow: 0 12px 36px rgba(58, 42, 24, 0.07);
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
@@ -28,8 +28,8 @@
 
 .c-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 22px 50px rgba(30, 26, 92, 0.14);
-  border-color: rgba(201, 189, 235, 0.9);
+  box-shadow: 0 22px 50px rgba(58, 42, 24, 0.14);
+  border-color: rgba(196, 146, 62, 0.55);
 }
 
 .c-card:hover::before {
@@ -48,8 +48,8 @@
   min-height: 168px;
   padding: 28px 24px 20px;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(240, 208, 138, 0.35), transparent 55%),
-    linear-gradient(165deg, var(--night-800) 0%, var(--night-950) 100%);
+    radial-gradient(ellipse at 50% 0%, rgba(214, 176, 106, 0.38), transparent 62%),
+    linear-gradient(180deg, #FBF6EC 0%, #F3E6CC 100%);
 }
 
 .c-card-media img,
@@ -58,7 +58,7 @@
   height: 104px;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.12), 0 0 0 7px var(--gold-400);
+  box-shadow: 0 0 0 5px #fff, 0 0 0 7px var(--gold-400);
 }
 
 .c-card-avatar {

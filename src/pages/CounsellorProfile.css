@@ -81,7 +81,7 @@
 .cprofile-rail-card {
   background: #fff;
   border: 1px solid var(--lavender-100);
-  box-shadow: 0 12px 36px rgba(30, 26, 92, 0.07);
+  box-shadow: 0 12px 36px rgba(58, 42, 24, 0.07);
 }
 
 .cprofile-hero {
@@ -101,7 +101,6 @@
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 5;
-  margin: -56px 0 0;
   border-radius: 24px;
   display: grid;
   place-items: center;
@@ -143,7 +142,7 @@
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(30, 26, 92, 0.12);
+  box-shadow: 0 4px 12px rgba(58, 42, 24, 0.12);
 }
 
 .cprofile-verified i {
