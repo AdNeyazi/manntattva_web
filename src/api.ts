@@ -11,6 +11,7 @@ export interface User {
   phone: string | null;
   country_code: string | null;
   role: Role;
+  banner_url: string | null;
 }
 
 export interface SignupFields {
@@ -161,6 +162,7 @@ export interface AdminAnalytics {
     this_month: number;
     last_7_days: number;
     by_status: Record<string, number>;
+    last_7_days_series: Array<{ date: string; label: string; count: number }>;
   };
   top_counsellors: Array<{
     counsellor_id: number;
@@ -174,6 +176,86 @@ export interface AdminCounsellorUpdate {
   status?: "draft" | "published";
   is_verified?: boolean;
   registration_no?: string;
+}
+
+export type ContentStatus = "draft" | "pending" | "published" | "rejected";
+export type EventKind = "workshop" | "webinar" | "retreat" | "festival";
+export type EventMode = "online" | "offline" | "hybrid";
+
+export interface ContentAuthor {
+  slug: string;
+  full_name: string;
+  is_verified: boolean;
+  photo_url?: string | null;
+}
+
+export interface PublicBlog {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  cover_image_url: string | null;
+  published_at: string | null;
+  author: ContentAuthor;
+}
+
+export interface PublicEvent {
+  id: number;
+  slug: string;
+  title: string;
+  body: string;
+  kind: EventKind;
+  mode: EventMode;
+  location: string | null;
+  meeting_url: string | null;
+  starts_at: string;
+  ends_at: string;
+  published_at: string | null;
+  author: ContentAuthor;
+}
+
+export interface OwnerBlog extends Omit<PublicBlog, "excerpt"> {
+  excerpt: string | null;
+  status: ContentStatus;
+  reviewer_note: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OwnerEvent extends PublicEvent {
+  status: ContentStatus;
+  reviewer_note: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogInput {
+  title: string;
+  excerpt: string;
+  body: string;
+  cover_image?: File;
+}
+
+export interface EventInput {
+  title: string;
+  body: string;
+  kind: EventKind;
+  mode: EventMode;
+  location: string;
+  meeting_url: string;
+  starts_at: string;
+  ends_at: string;
+}
+
+export interface VerifyResult {
+  found: boolean;
+  verified?: boolean;
+  counsellor?: CounsellorSummary & { registration_no: string };
 }
 
 export interface CounsellorFilters {
@@ -229,6 +311,15 @@ export class ApiError extends Error {
 
 export function errorMessages(err: unknown, fallback: string): string[] {
   return err instanceof ApiError ? err.messages : [fallback];
+}
+
+function blogForm(values: BlogInput): FormData {
+  const form = new FormData();
+  form.append("blog[title]", values.title);
+  form.append("blog[excerpt]", values.excerpt);
+  form.append("blog[body]", values.body);
+  if (values.cover_image) form.append("blog[cover_image]", values.cover_image);
+  return form;
 }
 
 // ---------- Token storage ----------
@@ -290,6 +381,12 @@ export const api = {
     request<UserResponse>("/api/v1/login", { method: "POST", body: { user: { email, password } } }),
   logout: () => request<{ message: string }>("/api/v1/logout", { method: "DELETE" }),
   me: () => request<UserResponse>("/api/v1/me"),
+  uploadBanner: (file: File) => {
+    const form = new FormData();
+    form.append("banner", file);
+    return request<UserResponse>("/api/v1/me/banner", { method: "PATCH", form });
+  },
+  removeBanner: () => request<UserResponse>("/api/v1/me/banner", { method: "DELETE" }),
 
   // ----- Public -----
   counsellors: {
@@ -303,6 +400,17 @@ export const api = {
     },
     get: (slug: string) =>
       request<{ counsellor: CounsellorDetail }>(`/api/v1/counsellors/${encodeURIComponent(slug)}`),
+    verify: (registration_no: string) =>
+      request<VerifyResult>(`/api/v1/verify?registration_no=${encodeURIComponent(registration_no)}`),
+  },
+  blogs: {
+    list: () => request<{ blogs: PublicBlog[] }>("/api/v1/blogs"),
+    get: (slug: string) => request<{ blog: PublicBlog }>(`/api/v1/blogs/${encodeURIComponent(slug)}`),
+  },
+  events: {
+    list: (scope?: "upcoming" | "past") =>
+      request<{ events: PublicEvent[] }>(`/api/v1/events${scope === "past" ? "?scope=past" : ""}`),
+    get: (slug: string) => request<{ event: PublicEvent }>(`/api/v1/events/${encodeURIComponent(slug)}`),
   },
   lookups: {
     languages: () => request<{ languages: Option[] }>("/api/v1/languages"),
@@ -325,6 +433,15 @@ export const api = {
       request<{ appointment: Appointment }>(`/api/v1/appointments/${id}/cancel`, { method: "PATCH" }),
   },
 
+  // ----- Counsellor (own schedule) -----
+  myAppointments: {
+    setStatus: (id: number, status: "completed" | "no_show" | "cancelled") =>
+      request<{ appointment: Appointment }>(`/api/v1/my/appointments/${id}`, {
+        method: "PATCH",
+        body: { appointment: { status } },
+      }),
+  },
+
   // ----- Counsellor (own profile) -----
   myProfile: {
     get: () => request<{ counsellor: CounsellorAdmin }>("/api/v1/my/counsellor_profile"),
@@ -344,12 +461,41 @@ export const api = {
     removePhoto: () =>
       request<{ counsellor: CounsellorAdmin }>("/api/v1/my/counsellor_profile/photo", { method: "DELETE" }),
   },
+  myBlogs: {
+    list: () => request<{ blogs: OwnerBlog[] }>("/api/v1/my/blogs"),
+    get: (id: number) => request<{ blog: OwnerBlog }>(`/api/v1/my/blogs/${id}`),
+    create: (values: BlogInput) =>
+      request<{ blog: OwnerBlog }>("/api/v1/my/blogs", { method: "POST", form: blogForm(values) }),
+    update: (id: number, values: BlogInput) =>
+      request<{ blog: OwnerBlog }>(`/api/v1/my/blogs/${id}`, { method: "PATCH", form: blogForm(values) }),
+    destroy: (id: number) => request<null>(`/api/v1/my/blogs/${id}`, { method: "DELETE" }),
+    submit: (id: number) =>
+      request<{ blog: OwnerBlog }>(`/api/v1/my/blogs/${id}/submit`, { method: "PATCH" }),
+  },
+  myEvents: {
+    list: () => request<{ events: OwnerEvent[] }>("/api/v1/my/events"),
+    get: (id: number) => request<{ event: OwnerEvent }>(`/api/v1/my/events/${id}`),
+    create: (values: EventInput) =>
+      request<{ event: OwnerEvent }>("/api/v1/my/events", { method: "POST", body: { event: values } }),
+    update: (id: number, values: EventInput) =>
+      request<{ event: OwnerEvent }>(`/api/v1/my/events/${id}`, { method: "PATCH", body: { event: values } }),
+    destroy: (id: number) => request<null>(`/api/v1/my/events/${id}`, { method: "DELETE" }),
+    submit: (id: number) =>
+      request<{ event: OwnerEvent }>(`/api/v1/my/events/${id}/submit`, { method: "PATCH" }),
+  },
 
   // ----- Admin -----
   admin: {
     analytics: () => request<{ analytics: AdminAnalytics }>("/api/v1/admin/analytics"),
     users: {
       list: () => request<{ users: AdminUserRow[] }>("/api/v1/admin/users"),
+    },
+    appointments: {
+      setPayment: (id: number, payment_status: "unpaid" | "paid" | "waived") =>
+        request<{ appointment: Appointment }>(`/api/v1/admin/appointments/${id}`, {
+          method: "PATCH",
+          body: { appointment: { payment_status } },
+        }),
     },
     counsellors: {
       list: () => request<{ counsellors: CounsellorAdmin[] }>("/api/v1/admin/counsellors"),
@@ -358,10 +504,32 @@ export const api = {
           method: "POST",
           body: { counsellor: values },
         }),
-      update: (id: number, values: AdminCounsellorUpdate) =>
+        update: (id: number, values: AdminCounsellorUpdate) =>
         request<{ counsellor: CounsellorAdmin }>(`/api/v1/admin/counsellors/${id}`, {
           method: "PATCH",
           body: { counsellor: values },
+        }),
+    },
+    blogs: {
+      list: (status?: ContentStatus | "") =>
+        request<{ items: OwnerBlog[] }>(`/api/v1/admin/blogs${status ? `?status=${status}` : ""}`),
+      approve: (id: number) =>
+        request<{ item: OwnerBlog }>(`/api/v1/admin/blogs/${id}/approve`, { method: "PATCH" }),
+      reject: (id: number, reviewer_note: string) =>
+        request<{ item: OwnerBlog }>(`/api/v1/admin/blogs/${id}/reject`, {
+          method: "PATCH",
+          body: { reviewer_note },
+        }),
+    },
+    events: {
+      list: (status?: ContentStatus | "") =>
+        request<{ items: OwnerEvent[] }>(`/api/v1/admin/events${status ? `?status=${status}` : ""}`),
+      approve: (id: number) =>
+        request<{ item: OwnerEvent }>(`/api/v1/admin/events/${id}/approve`, { method: "PATCH" }),
+      reject: (id: number, reviewer_note: string) =>
+        request<{ item: OwnerEvent }>(`/api/v1/admin/events/${id}/reject`, {
+          method: "PATCH",
+          body: { reviewer_note },
         }),
     },
   },

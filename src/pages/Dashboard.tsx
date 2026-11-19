@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { api, errorMessages, type Appointment, type Role } from "../api";
 import { useAuth } from "../auth/AuthContext";
@@ -54,6 +54,8 @@ function isSameCalendarDay(iso: string, timeZone: string): boolean {
   return fmt.format(new Date(iso)) === fmt.format(new Date());
 }
 
+type SessionStatus = "completed" | "no_show" | "cancelled";
+
 function SessionCard({
   appointment: a,
   role,
@@ -61,6 +63,7 @@ function SessionCard({
   canManageBookings,
   busyId,
   onCancel,
+  onSetStatus,
 }: {
   appointment: Appointment;
   role: Role;
@@ -68,11 +71,14 @@ function SessionCard({
   canManageBookings: boolean;
   busyId: number | null;
   onCancel: (id: number) => void;
+  onSetStatus: (id: number, status: SessionStatus) => void;
 }) {
   const meta = sessionMeta(a, role);
   const chip = sessionDateChip(a.starts_at, a.timezone);
   const showJoin = !past && a.meeting_link && (role === "counsellor" || role === "end_user");
-  const showNote = a.note && role !== "end_user";
+  const showNote = a.note && role === "counsellor";
+  const counsellorUpcoming = role === "counsellor" && appointmentChangeable(a.status, a.starts_at);
+  const counsellorNeedsOutcome = role === "counsellor" && a.status === "confirmed" && !counsellorUpcoming;
 
   return (
     <li className={`dash-session${past ? " dash-session--past" : ""}`}>
@@ -123,6 +129,24 @@ function SessionCard({
             </button>
           </>
         )}
+        {counsellorUpcoming && (
+          <button type="button" className="btn btn-sm btn-line" disabled={busyId === a.id}
+            onClick={() => onSetStatus(a.id, "cancelled")}>
+            {busyId === a.id ? "Cancelling…" : "Cancel session"}
+          </button>
+        )}
+        {counsellorNeedsOutcome && (
+          <>
+            <button type="button" className="btn btn-sm btn-gold" disabled={busyId === a.id}
+              onClick={() => onSetStatus(a.id, "completed")}>
+              Mark completed
+            </button>
+            <button type="button" className="btn btn-sm btn-line" disabled={busyId === a.id}
+              onClick={() => onSetStatus(a.id, "no_show")}>
+              No-show
+            </button>
+          </>
+        )}
         {role === "end_user" && !past && (
           <Link className="btn btn-sm btn-line" to={`/counsellors/${a.counsellor.slug}`}>
             View counsellor
@@ -134,35 +158,44 @@ function SessionCard({
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, replaceUser } = useAuth();
+  const [bannerBusy, setBannerBusy] = useState(false);
+  const [bannerError, setBannerError] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<string[]>([]);
   const [busyId, setBusyId] = useState<number | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setErrors([]);
-    try {
-      const { appointments: list } = await api.appointments.list();
-      setAppointments(list);
-    } catch (err) {
-      setErrors(errorMessages(err, "Could not load appointments"));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [now] = useState(() => Date.now());
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    api.appointments
+      .list()
+      .then(({ appointments: list }) => {
+        if (cancelled) return;
+        setAppointments(list);
+        setErrors([]);
+      })
+      .catch((err) => {
+        if (!cancelled) setErrors(errorMessages(err, "Could not load appointments"));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
   async function cancel(id: number) {
+    if (!window.confirm("Cancel this session? Fees are not refunded when a session is cancelled.")) return;
     setBusyId(id);
     setErrors([]);
     try {
       await api.appointments.cancel(id);
-      await load();
+      setReloadKey((k) => k + 1);
     } catch (err) {
       setErrors(errorMessages(err, "Could not cancel session"));
     } finally {
@@ -173,9 +206,9 @@ export default function Dashboard() {
   const upcoming = useMemo(
     () =>
       appointments.filter(
-        (a) => a.status === "confirmed" && new Date(a.starts_at).getTime() > Date.now(),
+        (a) => a.status === "confirmed" && new Date(a.starts_at).getTime() > now,
       ),
-    [appointments],
+    [appointments, now],
   );
 
   const past = useMemo(
@@ -188,6 +221,47 @@ export default function Dashboard() {
     [upcoming],
   );
 
+  async function onBanner(file: File | undefined) {
+    if (!file) return;
+    setBannerError(null);
+    setBannerBusy(true);
+    try {
+      const d = await api.uploadBanner(file);
+      replaceUser(d.user);
+    } catch (err) {
+      setBannerError(errorMessages(err, "Could not upload that cover")[0]);
+    } finally {
+      setBannerBusy(false);
+    }
+  }
+
+  async function removeBanner() {
+    setBannerError(null);
+    setBannerBusy(true);
+    try {
+      const d = await api.removeBanner();
+      replaceUser(d.user);
+    } catch (err) {
+      setBannerError(errorMessages(err, "Could not remove the cover")[0]);
+    } finally {
+      setBannerBusy(false);
+    }
+  }
+
+  async function setStatus(id: number, status: SessionStatus) {
+    if (status === "cancelled" && !window.confirm("Cancel this session? The client will lose their booking.")) return;
+    setBusyId(id);
+    setErrors([]);
+    try {
+      await api.myAppointments.setStatus(id, status);
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      setErrors(errorMessages(err, "Could not update the session"));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   if (!user) return null;
 
   const role = user.role;
@@ -197,13 +271,42 @@ export default function Dashboard() {
 
   return (
     <div className="dash-page">
-      <header className="dash-hero">
+      <header
+        className={`dash-hero${user.banner_url ? " dash-hero--cover" : ""}`}
+        style={user.banner_url ? { backgroundImage: `url("${user.banner_url}")` } : undefined}
+      >
+        <div className="dash-banner-tools">
+          <label className="dash-banner-edit">
+            {bannerBusy ? "Saving…" : user.banner_url ? "Edit cover" : "Add cover photo"}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={bannerBusy}
+              onChange={(e) => {
+                void onBanner(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {user.banner_url && (
+            <button type="button" className="dash-banner-remove" disabled={bannerBusy} onClick={() => void removeBanner()}>
+              Remove
+            </button>
+          )}
+        </div>
+        {bannerError && <p className="dash-banner-error" role="alert">{bannerError}</p>}
         <div className="container dash-hero-inner">
-          <h1>
-            Hello, <em>{firstName}</em>
-          </h1>
+          <h1>{role === "counsellor" ? "My account" : <>Hello, <em>{firstName}</em></>}</h1>
           <p className="dash-hero-sub">
-            Signed in as <b>{user.email}</b>
+            {role === "counsellor" ? (
+              <>
+                Hello, <b>{firstName}</b> · signed in as <b>{user.email}</b>
+              </>
+            ) : (
+              <>
+                Signed in as <b>{user.email}</b>
+              </>
+            )}
           </p>
           <div className="dash-hero-actions">
             {role === "admin" && (
@@ -213,11 +316,11 @@ export default function Dashboard() {
             )}
             {role === "counsellor" && (
               <>
-                <Link className="btn btn-sm btn-gold" to="/my/profile">
-                  Edit my profile
+                <Link className="btn btn-sm btn-gold" to="/my">
+                  Dashboard
                 </Link>
-                <Link className="btn btn-sm btn-ghost" to="/counsellors">
-                  View public listing
+                <Link className="btn btn-sm btn-ghost" to="/my/profile">
+                  Edit my profile
                 </Link>
               </>
             )}
@@ -304,6 +407,7 @@ export default function Dashboard() {
                   canManageBookings={canManageBookings}
                   busyId={busyId}
                   onCancel={(id) => void cancel(id)}
+                  onSetStatus={(id, status) => void setStatus(id, status)}
                 />
               ))}
             </ul>
@@ -326,6 +430,7 @@ export default function Dashboard() {
                   canManageBookings={false}
                   busyId={busyId}
                   onCancel={() => undefined}
+                  onSetStatus={(id, status) => void setStatus(id, status)}
                 />
               ))}
             </ul>

@@ -126,8 +126,8 @@ export default function MyProfile() {
   }
 
   return (
-    <section className="page container narrow">
-      <header className="page-head">
+    <section>
+      <header className="admin-page-head">
         <h1>My profile</h1>
         <p>
           This is what people see on your public page.{" "}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import "./Navbar.css";
@@ -7,16 +7,21 @@ const DARK_OVERLAY = ["/login", "/signup"];
 
 const MAIN_LINKS = [
   { to: "/#about", label: "About", match: null },
-  { to: "/#services", label: "Services", match: null },
   { to: "/counsellors", label: "Counsellors", match: "/counsellors" },
-  { to: "/#how", label: "How it works", match: null },
+  { to: "/events", label: "Events", match: "/events" },
+  { to: "/blogs", label: "Insights", match: "/blogs" },
+  { to: "/verify", label: "Verify", match: "/verify" },
+  { to: "/booking?segment=heartbreak", label: "Book session", className: "btn btn-sm btn-gold nav-book", match: "/booking?segment=heartbreak" },
 ] as const;
 
 function isBandRoute(pathname: string): boolean {
   if (pathname === "/counsellors" || pathname === "/booking" || pathname === "/dashboard") return true;
   if (pathname.startsWith("/counsellors/")) return true;
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return true;
-  if (pathname === "/my/profile") return true;
+  if (pathname === "/my" || pathname.startsWith("/my/")) return true;
+  if (pathname === "/blogs" || pathname.startsWith("/blogs/")) return true;
+  if (pathname === "/events" || pathname.startsWith("/events/")) return true;
+  if (pathname === "/verify") return true;
   return false;
 }
 
@@ -32,15 +37,16 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPath, setMenuPath] = useState<string | null>(null);
+  const menuOpen = menuPath === pathname;
+  const setMenuOpen = (next: boolean | ((open: boolean) => boolean)) => {
+    const value = typeof next === "function" ? next(menuOpen) : next;
+    setMenuPath(value ? pathname : null);
+  };
 
   const dark = DARK_OVERLAY.includes(pathname);
   const home = pathname === "/";
   const band = !dark && !home && isBandRoute(pathname);
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
 
   async function handleLogout() {
     await logout();
@@ -55,7 +61,11 @@ export default function Navbar() {
     <header className={navClass}>
       <div className="nav-inner">
         <Link className="logo" to="/" onClick={() => setMenuOpen(false)}>
-          <img className="logo-image" src="/MANNTATTVA.png" alt="Manntattva" />
+        <img
+            src="/Manntattva Brain Network Logo.png"
+            alt="Manntattva"
+            className="navbar-logo"
+          />
         </Link>
 
         <nav className="nav-links" aria-label="Main">
@@ -71,17 +81,15 @@ export default function Navbar() {
         </nav>
 
         <div className="nav-actions">
-          <Link className="btn btn-sm btn-gold nav-book" to="/booking?segment=heartbreak">
-            Book session
-          </Link>
           {user ? (
             <>
               {user.role === "counsellor" && (
-                <Link className="link-quiet" to="/my/profile">My profile</Link>
+                <Link className="btn btn-sm btn-gold nav-book" to="/my">Dashboard</Link>
               )}
               {user.role === "admin" && (
                 <Link className="link-quiet" to="/admin">Admin console</Link>
               )}
+              <Link className="btn btn-sm btn-line" to="/dashboard">My account</Link>
               <button type="button" className="btn btn-sm btn-line" onClick={handleLogout}>
                 Log out
               </button>
@@ -131,13 +139,13 @@ export default function Navbar() {
           )}
           {user && (
             <>
-              <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
               {user.role === "counsellor" && (
-                <Link to="/my/profile" onClick={() => setMenuOpen(false)}>My profile</Link>
+                <Link to="/my" onClick={() => setMenuOpen(false)}>Dashboard</Link>
               )}
               {user.role === "admin" && (
                 <Link to="/admin" onClick={() => setMenuOpen(false)}>Admin console</Link>
               )}
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)}>My account</Link>
               <button
                 type="button"
                 className="nav-drawer-logout"

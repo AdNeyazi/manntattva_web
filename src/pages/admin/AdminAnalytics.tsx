@@ -1,31 +1,53 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { api, errorMessages, type AdminAnalytics } from "../../api";
 
-function StatusBars({ byStatus }: { byStatus: Record<string, number> }) {
-  const entries = useMemo(() => {
-    const rows = Object.entries(byStatus).filter(([, n]) => n > 0);
-    const max = Math.max(1, ...rows.map(([, n]) => n));
-    return rows.map(([status, count]) => ({ status, count, pct: (count / max) * 100 }));
-  }, [byStatus]);
+const GOLD = "#D4AF37";
+const FOREST = "#1A332E";
+const SAGE = "#5A6B66";
+const CREAM = "#E8C547";
+const MUTED = "#C5D0CA";
 
-  if (entries.length === 0) {
-    return <p className="admin-soon">No appointment data yet.</p>;
-  }
+const PIE_COLORS = [GOLD, FOREST, SAGE, CREAM, MUTED];
 
+function ChartCard({
+  title,
+  empty,
+  children,
+}: {
+  title: string;
+  empty?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <div className="admin-bar-chart">
-      {entries.map(({ status, count, pct }) => (
-        <div key={status} className="admin-bar-row">
-          <label htmlFor={`bar-${status}`}>{status.replace("_", " ")}</label>
-          <div className="admin-bar-track" id={`bar-${status}`}>
-            <div className="admin-bar-fill" style={{ width: `${pct}%` }} />
-          </div>
-          <output>{count}</output>
-        </div>
-      ))}
+    <div className="admin-panel">
+      <h2>{title}</h2>
+      {empty ? <p className="admin-soon">No data yet.</p> : <div className="admin-chart">{children}</div>}
     </div>
   );
+}
+
+function tooltipStyle() {
+  return {
+    borderRadius: 12,
+    border: "1px solid var(--lavender-100)",
+    fontSize: 13,
+  };
 }
 
 export default function AdminAnalyticsPage() {
@@ -38,6 +60,34 @@ export default function AdminAnalyticsPage() {
       .then((d) => setData(d.analytics))
       .catch((err) => setError(errorMessages(err, "Could not load analytics")[0]));
   }, []);
+
+  const statusData = useMemo(() => {
+    if (!data) return [];
+    return Object.entries(data.appointments.by_status)
+      .filter(([, n]) => n > 0)
+      .map(([name, value]) => ({ name: name.replace("_", " "), value }));
+  }, [data]);
+
+  const userData = useMemo(() => {
+    if (!data) return [];
+    return [
+      { name: "Clients", value: data.users.clients },
+      { name: "Counsellors", value: data.users.counsellors },
+      { name: "Admins", value: data.users.admins },
+    ].filter((d) => d.value > 0);
+  }, [data]);
+
+  const counsellorMix = useMemo(() => {
+    if (!data) return [];
+    return [
+      { name: "Published", value: data.counsellors.published },
+      { name: "Draft", value: data.counsellors.draft },
+      { name: "Verified", value: data.counsellors.verified },
+    ];
+  }, [data]);
+
+  const weekSeries = data?.appointments.last_7_days_series ?? [];
+  const top = data?.top_counsellors ?? [];
 
   return (
     <>
@@ -66,51 +116,91 @@ export default function AdminAnalyticsPage() {
             <div className="admin-kpi"><b>{data.counsellors.published}</b><span>Published counsellors</span></div>
           </div>
 
-          <div className="admin-panel">
-            <h2>Sessions by status</h2>
-            <StatusBars byStatus={data.appointments.by_status} />
-          </div>
+          <div className="admin-chart-grid">
+            <ChartCard title="Bookings created (last 7 days)" empty={weekSeries.every((d) => d.count === 0)}>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={weekSeries} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="goldFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={GOLD} stopOpacity={0.45} />
+                      <stop offset="100%" stopColor={GOLD} stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={MUTED} />
+                  <XAxis dataKey="label" tick={{ fill: SAGE, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fill: SAGE, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle()} />
+                  <Area type="monotone" dataKey="count" name="Bookings" stroke={GOLD} strokeWidth={2.5} fill="url(#goldFill)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
-          <div className="admin-panel">
-            <h2>Top counsellors by bookings</h2>
-            {data.top_counsellors.length === 0 ? (
-              <p className="admin-soon">No counsellor booking data yet.</p>
-            ) : (
-              <div className="table-wrap" style={{ padding: 0, boxShadow: "none", border: 0 }}>
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Counsellor</th>
-                      <th>Bookings</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.top_counsellors.map((c) => (
-                      <tr key={c.counsellor_id}>
-                        <td><b>{c.full_name}</b></td>
-                        <td>{c.bookings}</td>
-                        <td>
-                          <Link className="card-link" to={`/counsellors/${c.slug}`}>View profile</Link>
-                        </td>
-                      </tr>
+            <ChartCard title="Sessions by status" empty={statusData.length === 0}>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={58} outerRadius={88} paddingAngle={3}>
+                    {statusData.map((_, i) => (
+                      <Cell key={statusData[i]!.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle()} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="Top counsellors by bookings" empty={top.length === 0}>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={top} layout="vertical" margin={{ top: 8, right: 12, left: 8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={MUTED} horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fill: SAGE, fontSize: 12 }} axisLine={false} />
+                  <YAxis type="category" dataKey="full_name" width={110} tick={{ fill: FOREST, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle()} />
+                  <Bar dataKey="bookings" name="Bookings" fill={FOREST} radius={[0, 8, 8, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              {top.length > 0 && (
+                <p className="fine" style={{ marginTop: 8 }}>
+                  {top.map((c, i) => (
+                    <span key={c.counsellor_id}>
+                      {i > 0 && " · "}
+                      <Link to={`/counsellors/${c.slug}`}>{c.full_name}</Link>
+                    </span>
+                  ))}
+                </p>
+              )}
+            </ChartCard>
+
+            <ChartCard title="Users by role" empty={userData.length === 0}>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie data={userData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={88}>
+                    {userData.map((_, i) => (
+                      <Cell key={userData[i]!.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle()} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
           </div>
 
-          <div className="admin-panel">
-            <h2>User breakdown</h2>
-            <StatusBars
-              byStatus={{
-                clients: data.users.clients,
-                counsellors: data.users.counsellors,
-                admins: data.users.admins,
-              }}
-            />
-          </div>
+          <ChartCard title="Counsellor roster mix" empty={counsellorMix.every((d) => d.value === 0)}>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={counsellorMix} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={MUTED} />
+                <XAxis dataKey="name" tick={{ fill: SAGE, fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fill: SAGE, fontSize: 12 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle()} />
+                <Bar dataKey="value" name="Count" radius={[8, 8, 0, 0]}>
+                  {counsellorMix.map((row, i) => (
+                    <Cell key={row.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
         </>
       )}
     </>

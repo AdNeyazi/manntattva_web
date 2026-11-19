@@ -7,6 +7,20 @@ export default function AdminAppointments() {
   const [items, setItems] = useState<Appointment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  async function setPayment(id: number, value: "unpaid" | "paid" | "waived") {
+    setBusyId(id);
+    setError(null);
+    try {
+      const { appointment } = await api.admin.appointments.setPayment(id, value);
+      setItems((list) => (list ?? []).map((a) => (a.id === id ? appointment : a)));
+    } catch (err) {
+      setError(errorMessages(err, "Could not update the payment status")[0]);
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   useEffect(() => {
     api.appointments
@@ -62,9 +76,16 @@ export default function AdminAppointments() {
                 <p className="dash-session-when">{formatSessionWhen(a.starts_at, a.timezone)}</p>
                 <div className="dash-session-tags">
                   <span className="dash-tag">{a.status.replace("_", " ")}</span>
-                  <span className="dash-tag dash-tag--mode">{a.payment_status.replace("_", " ")}</span>
                 </div>
-                {a.note && <p className="dash-session-note"><b>Note:</b> {a.note}</p>}
+                <label className="filter-field" style={{ maxWidth: 200, marginTop: 8 }}>
+                  <span>Payment</span>
+                  <select value={a.payment_status} disabled={busyId === a.id}
+                    onChange={(e) => void setPayment(a.id, e.target.value as "unpaid" | "paid" | "waived")}>
+                    <option value="unpaid">Unpaid</option>
+                    <option value="paid">Paid</option>
+                    <option value="waived">Waived</option>
+                  </select>
+                </label>
               </div>
               <div className="dash-session-actions">
                 <Link className="btn btn-sm btn-line" to={`/counsellors/${a.counsellor.slug}`}>

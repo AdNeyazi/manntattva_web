@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="2048"
+     height="768"
+     viewBox="0 0 2048 768"
+     role="img"
+     aria-labelledby="manntattva-logo-title">
+
+  <title id="manntattva-logo-title">Manntattva — The science of mind</title>
+
+  <!-- Use /golden-logo.png when embedding this SVG inline; <img src="*.svg"> cannot load nested images in most browsers. -->
+  <image
+    x="0"
+    y="0"
+    width="2048"
+    height="768"
+    preserveAspectRatio="xMidYMid meet"
+    href="/golden-logo.png"
+    xlink:href="/golden-logo.png"
+  />
+
+</svg>

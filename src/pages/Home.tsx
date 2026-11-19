@@ -49,9 +49,9 @@ const PILLARS: { icon: IconName; title: string; text: string }[] = [
 
 const SERVICES: { icon: IconName; title: string; text: string; to?: string; cta?: string }[] = [
   { icon: "chat", title: "Talk to a Counsellor", text: "Audio or video sessions with certified counsellors, matched to your need and language.", to: "/signup", cta: "Get started" },
-  { icon: "book", title: "Courses", text: "Karmic Counselling courses, recorded and offline, including a diploma with Jain University." },
-  { icon: "calendar", title: "Workshops & Events", text: "Webinars, workshops, retreats and festivals, online and in person." },
-  { icon: "smile", title: "Free Mind Check", text: "A short self-assessment to help you understand where you are today." },
+  { icon: "book", title: "Insights", text: "Articles from verified counsellors, published after review by the Manntattva team.", to: "/blogs", cta: "Read articles" },
+  { icon: "calendar", title: "Workshops & Events", text: "Webinars, workshops, retreats and festivals, online and in person.", to: "/events", cta: "See events" },
+  { icon: "smile", title: "Verify a counsellor", text: "Confirm a karmic counsellor by their unique Manntattva registration ID.", to: "/verify", cta: "Verify ID" },
 ];
 
 const STEPS = [
@@ -62,7 +62,7 @@ const STEPS = [
 
 export default function Home() {
   const { user } = useAuth();
-  const primaryTo = user ? "/dashboard" : "/signup";
+  const primaryTo = user?.role === "counsellor" ? "/my" : user ? "/dashboard" : "/signup";
 
   const [team, setTeam] = useState<CounsellorSummary[] | null>(null);
 
@@ -90,7 +90,7 @@ export default function Home() {
             </p>
             <div className="cta">
               <Link className="btn btn-gold" to={primaryTo}>Talk to a Counsellor</Link>
-              <Link className="btn btn-ghost" to="/#services">Explore Services</Link>
+              <Link className="btn btn-outline" to="/#services">Explore Services</Link>
             </div>
             <ul className="chips">
               <li>100% Confidential</li>

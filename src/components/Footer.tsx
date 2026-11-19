@@ -19,8 +19,10 @@ export default function Footer() {
         <div>
           <h4>Explore</h4>
           <Link to="/#about">About</Link>
-          <Link to="/#services">Services</Link>
           <Link to="/counsellors">Counsellors</Link>
+          <Link to="/events">Events</Link>
+          <Link to="/blogs">Insights</Link>
+          <Link to="/verify">Verify a counsellor</Link>
           <Link to="/signup">Create account</Link>
         </div>
 

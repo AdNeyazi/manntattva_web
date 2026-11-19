@@ -8,7 +8,9 @@ export default function SiteFooter() {
   const hide =
     pathname === "/dashboard" ||
     pathname === "/admin" ||
-    pathname.startsWith("/admin/");
+    pathname.startsWith("/admin/") ||
+    pathname === "/my" ||
+    pathname.startsWith("/my/");
 
   if (hide) return null;
   return <Footer />;

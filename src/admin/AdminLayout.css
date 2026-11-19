@@ -2,15 +2,19 @@
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
   min-height: calc(100vh - 72px);
+  align-items: stretch;
   background: var(--ivory);
 }
 
 .admin-side {
   position: sticky;
   top: 72px;
-  align-self: start;
-  max-height: calc(100vh - 72px);
+  align-self: stretch;
+  min-height: calc(100vh - 72px);
+  height: 100%;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   padding: 24px 16px 32px;
   background: var(--night-sky);
   color: var(--on-dark);
@@ -40,6 +44,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
 }
 
 .admin-side-link {
@@ -210,6 +215,22 @@
   text-align: right;
 }
 
+.admin-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-chart {
+  min-height: 260px;
+}
+
+@media (max-width: 960px) {
+  .admin-chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-soon {
   padding: 32px 24px;
   text-align: center;
@@ -227,7 +248,8 @@
   .admin-side {
     position: relative;
     top: 0;
-    max-height: none;
+    min-height: 0;
+    height: auto;
     padding-bottom: 16px;
   }
 

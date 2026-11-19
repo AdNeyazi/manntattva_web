@@ -4,10 +4,87 @@
 }
 
 .dash-hero {
-  background: var(--ivory-wash);
+  position: relative;
+  background: var(--ivory-wash) center / cover no-repeat;
   color: var(--ink);
-  padding: 40px 0 56px;
+  min-height: 240px;
+  padding: 72px 0 56px;
   margin-bottom: -28px;
+}
+
+.dash-hero--cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(12, 22, 20, 0.78) 0%, rgba(12, 22, 20, 0.2) 58%, rgba(12, 22, 20, 0.28) 100%);
+}
+
+.dash-hero-inner,
+.dash-banner-tools,
+.dash-banner-error {
+  position: relative;
+  z-index: 1;
+}
+
+.dash-banner-tools {
+  position: absolute;
+  top: 16px;
+  right: clamp(16px, 3vw, 40px);
+  display: flex;
+  gap: 8px;
+}
+
+.dash-banner-edit,
+.dash-banner-remove {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(18, 36, 32, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--night-900);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(18, 36, 32, 0.08);
+}
+
+.dash-banner-edit input {
+  display: none;
+}
+
+.dash-banner-edit:hover,
+.dash-banner-remove:hover:not(:disabled) {
+  background: #fff;
+}
+
+.dash-banner-remove:disabled,
+.dash-banner-edit:has(input:disabled) {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.dash-hero--cover .dash-banner-edit,
+.dash-hero--cover .dash-banner-remove {
+  border-color: transparent;
+}
+
+.dash-banner-error {
+  margin: 0 clamp(16px, 3vw, 40px) 8px;
+  color: #9b2c2c;
+  font-weight: 600;
+}
+
+.dash-hero--cover h1,
+.dash-hero--cover .dash-hero-sub,
+.dash-hero--cover .dash-hero-sub b {
+  color: #fff;
+}
+
+.dash-hero--cover h1 em {
+  color: var(--gold-300);
 }
 
 .dash-hero-inner {
@@ -25,7 +102,7 @@
 .dash-hero h1 {
   font-family: var(--font-display);
   font-size: clamp(2.2rem, 4vw, 3rem);
-  color: #1C1814;
+  color: var(--night-900);
   margin-bottom: 8px;
 }
 
@@ -35,13 +112,13 @@
 }
 
 .dash-hero-sub {
-  color: #5C5348;
+  color: var(--muted);
   font-size: 1rem;
   margin-bottom: 20px;
 }
 
 .dash-hero-sub b {
-  color: #1C1814;
+  color: var(--night-900);
   font-weight: 600;
 }
 
