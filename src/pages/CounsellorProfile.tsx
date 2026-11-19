@@ -1,15 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, ApiError, errorMessages, type CounsellorDetail, type ExperienceRecord, type EducationRecord } from "../api";
+import type { CounsellorDetail, ExperienceRecord, EducationRecord } from "../api";
+import { staticCounsellor } from "../data/staticContent";
 import { offeredSessions, previewItems } from "../lib/counsellor";
 import { initials, isWebUrl } from "../lib/text";
 import "./CounsellorProfile.css";
-
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "missing" }
-  | { kind: "error"; message: string }
-  | { kind: "ready"; counsellor: CounsellorDetail };
 
 function Icon({ d }: { d: string }) {
   return (
@@ -132,25 +127,9 @@ function Block({ icon, title, children }: { icon: string; title: string; childre
 
 export default function CounsellorProfile() {
   const { slug = "" } = useParams();
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const c = staticCounsellor(slug);
 
-  useEffect(() => {
-    let cancelled = false;
-    api.counsellors
-      .get(slug)
-      .then((d) => { if (!cancelled) setState({ kind: "ready", counsellor: d.counsellor }); })
-      .catch((err) => {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 404) setState({ kind: "missing" });
-        else setState({ kind: "error", message: errorMessages(err, "Could not load this profile")[0] });
-      });
-    return () => { cancelled = true; };
-  }, [slug]);
-
-  if (state.kind === "loading") {
-    return <section className="cprofile"><p className="cprofile-note">Loading…</p></section>;
-  }
-  if (state.kind === "missing") {
+  if (!c) {
     return (
       <section className="cprofile">
         <p className="cprofile-note">
@@ -159,11 +138,6 @@ export default function CounsellorProfile() {
       </section>
     );
   }
-  if (state.kind === "error") {
-    return <section className="cprofile"><p className="cprofile-note">{state.message}</p></section>;
-  }
-
-  const c = state.counsellor;
   const modes = offeredSessions(c);
   const links = Object.entries(c.social_links).filter(([, url]) => isWebUrl(url));
   const focus = previewItems(c.specializations, 3);

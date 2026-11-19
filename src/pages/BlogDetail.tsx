@@ -1,29 +1,20 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, errorMessages, type PublicBlog } from "../api";
+import { staticBlog } from "../data/staticContent";
 import { formatWhen } from "../lib/content";
 import "./Content.css";
 
 export default function BlogDetail() {
   const { slug = "" } = useParams();
-  const [blog, setBlog] = useState<PublicBlog | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const blog = staticBlog(slug);
 
-  useEffect(() => {
-    api.blogs.get(slug)
-      .then((d) => setBlog(d.blog))
-      .catch((err) => setError(errorMessages(err, "Article not found")[0]));
-  }, [slug]);
-
-  if (error) {
+  if (!blog) {
     return (
       <div className="page container">
-        <p className="form-error">{error}</p>
+        <p className="form-error">Article not found</p>
         <Link to="/blogs">← All articles</Link>
       </div>
     );
   }
-  if (!blog) return <p className="center-note">Loading…</p>;
 
   return (
     <div className="page container narrow">

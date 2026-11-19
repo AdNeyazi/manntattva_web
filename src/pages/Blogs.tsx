@@ -1,6 +1,6 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { api, errorMessages, type PublicBlog } from "../api";
+import { STATIC_BLOGS } from "../data/staticContent";
 import "./Content.css";
 
 const PUBLISHED_DATE = new Intl.DateTimeFormat("en-IN", {
@@ -44,14 +44,7 @@ function initials(name: string) {
 }
 
 export default function Blogs() {
-  const [items, setItems] = useState<PublicBlog[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.blogs.list()
-      .then((d) => setItems(d.blogs))
-      .catch((err) => setError(errorMessages(err, "Could not load articles")[0]));
-  }, []);
+  const items = STATIC_BLOGS;
 
   return (
     <div className="page container blogs-page">
@@ -60,10 +53,8 @@ export default function Blogs() {
         <h1>Thoughts for a more mindful life</h1>
         <p>Reflections and practical guidance from Manntattva counsellors, thoughtfully reviewed by our team.</p>
       </header>
-      {error && <div className="form-error" role="alert">{error}</div>}
-      {items === null && !error && <p className="muted-center">Loading…</p>}
-      {items && items.length === 0 && <p className="empty-state">No published articles yet.</p>}
-      {items && items.length > 0 && (
+      {items.length === 0 && <p className="empty-state">No published articles yet.</p>}
+      {items.length > 0 && (
         <div className="blog-card-grid">
           {items.map((blog, index) => (
             <Link

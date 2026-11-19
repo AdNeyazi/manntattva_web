@@ -20,6 +20,7 @@ import {
   type BookingDraftGender,
   type BookingDraftStep,
 } from "../lib/bookingDraft";
+import { staticCounsellor, staticCounsellors } from "../data/staticContent";
 import { offeredSessions, previewItems } from "../lib/counsellor";
 import { initials } from "../lib/text";
 import "./Booking.css";
@@ -105,7 +106,6 @@ export default function Booking() {
   const [roster, setRoster] = useState<CounsellorSummary[]>([]);
   const [detailResult, setDetailResult] = useState<DetailResult | null>(null);
   const [detailRefresh, setDetailRefresh] = useState(0);
-  const [rosterError, setRosterError] = useState<string | null>(null);
   const [rosterLoading, setRosterLoading] = useState(isHub);
   const [selectedDate, setSelectedDate] = useState<string | null>(() =>
     initialField(routeSlug, rescheduleId, isHub, (d) => d.selectedDate ?? "", "") || null,
@@ -162,21 +162,8 @@ export default function Booking() {
 
   useEffect(() => {
     if (!isHub) return;
-    let cancelled = false;
-    api.counsellors
-      .list({ mode: "online" })
-      .then(({ counsellors }) => {
-        if (!cancelled) setRoster(counsellors);
-      })
-      .catch((err) => {
-        if (!cancelled) setRosterError(errorMessages(err, "Could not load counsellors")[0] ?? "Could not load counsellors.");
-      })
-      .finally(() => {
-        if (!cancelled) setRosterLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    setRoster(staticCounsellors({ mode: "online" }));
+    setRosterLoading(false);
   }, [isHub]);
 
   useEffect(() => {
@@ -199,34 +186,22 @@ export default function Booking() {
 
   useEffect(() => {
     if (!activeSlug) return;
-    let cancelled = false;
-    api.counsellors
-      .get(activeSlug)
-      .then(({ counsellor: c }) => {
-        if (cancelled) return;
-        setDetailResult({ slug: activeSlug, counsellor: c, error: null });
-        const draft = loadBookingDraft(draftKey);
-        const useDraft = draftMatches(draft, routeSlug, rescheduleId, isHub) && draft!.counsellorSlug === c.slug;
-        const { date, time } = useDraft
-          ? pickSlotFromDraft(c.availability, draft!.selectedDate, draft!.selectedTime)
-          : pickSlotFromDraft(c.availability, null, null);
-        setSelectedDate(date);
-        setSelectedTime(time);
-        if (useDraft) {
-          setStep(clampDraftStep(draft!.step, Boolean(date && time)));
-        }
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setDetailResult({
-          slug: activeSlug,
-          counsellor: null,
-          error: errorMessages(err, "Could not load counsellor")[0] ?? "Could not load counsellor.",
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
+    const c = staticCounsellor(activeSlug);
+    if (!c) {
+      setDetailResult({ slug: activeSlug, counsellor: null, error: "Could not load counsellor" });
+      return;
+    }
+    setDetailResult({ slug: activeSlug, counsellor: c, error: null });
+    const draft = loadBookingDraft(draftKey);
+    const useDraft = draftMatches(draft, routeSlug, rescheduleId, isHub) && draft!.counsellorSlug === c.slug;
+    const { date, time } = useDraft
+      ? pickSlotFromDraft(c.availability, draft!.selectedDate, draft!.selectedTime)
+      : pickSlotFromDraft(c.availability, null, null);
+    setSelectedDate(date);
+    setSelectedTime(time);
+    if (useDraft) {
+      setStep(clampDraftStep(draft!.step, Boolean(date && time)));
+    }
   }, [activeSlug, draftKey, isHub, rescheduleId, routeSlug, detailRefresh]);
 
   useEffect(() => {
@@ -499,12 +474,6 @@ export default function Booking() {
             </button>
           ))}
         </div>
-
-        {rosterError && isHub && (
-          <div className="form-error" role="alert" style={{ marginBottom: 16 }}>
-            {rosterError}
-          </div>
-        )}
 
         {rescheduleId && currentBooking && (
           <p className="book-note" role="status">

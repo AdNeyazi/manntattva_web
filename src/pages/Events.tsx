@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { api, errorMessages, type PublicEvent } from "../api";
+import type { PublicEvent } from "../api";
+import { staticEvents } from "../data/staticContent";
 import { EVENT_KINDS, EVENT_MODES, formatWhen } from "../lib/content";
 import "./Content.css";
 
@@ -13,22 +14,7 @@ function modeLabel(mode: PublicEvent["mode"]) {
 
 export default function Events() {
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
-  // The result is stored with the tab it belongs to, so "loading" is derived instead of
-  // being set inside the effect.
-  const [result, setResult] = useState<{ tab: string; events: PublicEvent[] | null; error: string | null } | null>(null);
-  const current = result?.tab === tab ? result : null;
-  const items = current?.events ?? null;
-  const error = current?.error ?? null;
-
-  useEffect(() => {
-    let cancelled = false;
-    api.events.list(tab)
-      .then((d) => { if (!cancelled) setResult({ tab, events: d.events, error: null }); })
-      .catch((err) => {
-        if (!cancelled) setResult({ tab, events: null, error: errorMessages(err, "Could not load events")[0] });
-      });
-    return () => { cancelled = true; };
-  }, [tab]);
+  const items = staticEvents(tab);
 
   return (
     <div className="page container">
@@ -42,10 +28,8 @@ export default function Events() {
         {" "}
         <button type="button" className={`btn btn-sm ${tab === "past" ? "btn-gold" : "btn-line"}`} onClick={() => setTab("past")}>Past</button>
       </div>
-      {error && <div className="form-error" role="alert">{error}</div>}
-      {items === null && !error && <p className="muted-center">Loading…</p>}
-      {items && items.length === 0 && <p className="empty-state">No {tab} events yet.</p>}
-      {items && items.length > 0 && (
+      {items.length === 0 && <p className="empty-state">No {tab} events yet.</p>}
+      {items.length > 0 && (
         <div className="content-list">
           {items.map((event) => (
             <Link className="content-card" key={event.id} to={`/events/${event.slug}`}>

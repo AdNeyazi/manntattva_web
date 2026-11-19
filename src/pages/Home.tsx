@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, type CounsellorSummary } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import CounsellorCard from "../components/CounsellorCard";
 import { Mandala, Stars } from "../components/Decor";
+import { staticCounsellors } from "../data/staticContent";
 
 // Simple line icons: each icon is a list of SVG path strings (24x24 grid).
 const ICONS = {
@@ -63,15 +62,7 @@ const STEPS = [
 export default function Home() {
   const { user } = useAuth();
   const primaryTo = user?.role === "counsellor" ? "/my" : user ? "/dashboard" : "/signup";
-
-  const [team, setTeam] = useState<CounsellorSummary[] | null>(null);
-
-  useEffect(() => {
-    api.counsellors
-      .list({ limit: 4 })
-      .then((d) => setTeam(d.counsellors))
-      .catch(() => setTeam([]));
-  }, []);
+  const team = staticCounsellors({}, 4);
 
   return (
     <>
@@ -163,10 +154,10 @@ export default function Home() {
             <h2>Meet your counsellors</h2>
             <p>Trained psychologists who blend clinical precision with a compassionate presence.</p>
           </div>
-          {team !== null && team.length === 0 && (
+          {team.length === 0 && (
             <p className="muted-center">Our counsellor profiles are coming soon.</p>
           )}
-          {team !== null && team.length > 0 && (
+          {team.length > 0 && (
             <>
               <div className="counsellor-grid">
                 {team.map((c) => <CounsellorCard key={c.id} c={c} />)}

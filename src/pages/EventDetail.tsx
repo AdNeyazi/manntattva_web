@@ -1,29 +1,20 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, errorMessages, type PublicEvent } from "../api";
+import { staticEvent } from "../data/staticContent";
 import { EVENT_KINDS, EVENT_MODES, formatWhen } from "../lib/content";
 import "./Content.css";
 
 export default function EventDetail() {
   const { slug = "" } = useParams();
-  const [event, setEvent] = useState<PublicEvent | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const event = staticEvent(slug);
 
-  useEffect(() => {
-    api.events.get(slug)
-      .then((d) => setEvent(d.event))
-      .catch((err) => setError(errorMessages(err, "Event not found")[0]));
-  }, [slug]);
-
-  if (error) {
+  if (!event) {
     return (
       <div className="page container">
-        <p className="form-error">{error}</p>
+        <p className="form-error">Event not found</p>
         <Link to="/events">← All events</Link>
       </div>
     );
   }
-  if (!event) return <p className="center-note">Loading…</p>;
 
   const kind = EVENT_KINDS.find((k) => k.id === event.kind)?.label;
   const mode = EVENT_MODES.find((k) => k.id === event.mode)?.label;

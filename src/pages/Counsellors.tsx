@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { api, errorMessages, type CounsellorFilters, type CounsellorSummary, type Option } from "../api";
+import { useMemo, useState } from "react";
+import type { CounsellorFilters } from "../api";
 import CounsellorCard from "../components/CounsellorCard";
+import { staticCounsellors, staticFilterOptions } from "../data/staticContent";
 import "./Counsellors.css";
 
 const MODES = [
@@ -36,30 +37,8 @@ function FilterField({
 
 export default function Counsellors() {
   const [filters, setFilters] = useState<CounsellorFilters>(EMPTY_FILTERS);
-  const [languages, setLanguages] = useState<Option[]>([]);
-  const [specializations, setSpecializations] = useState<Option[]>([]);
-  const [items, setItems] = useState<CounsellorSummary[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.lookups.languages().then((d) => setLanguages(d.languages)).catch(() => undefined);
-    api.lookups.specializations().then((d) => setSpecializations(d.specializations)).catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    api.counsellors
-      .list(filters)
-      .then((d) => {
-        if (cancelled) return;
-        setItems(d.counsellors);
-        setError(null);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(errorMessages(err, "Could not load counsellors")[0]);
-      });
-    return () => { cancelled = true; };
-  }, [filters]);
+  const { languages, specializations } = staticFilterOptions();
+  const items = useMemo(() => staticCounsellors(filters), [filters]);
 
   const set = (key: keyof CounsellorFilters) => (value: string) =>
     setFilters((f) => ({ ...f, [key]: value }));
@@ -69,11 +48,9 @@ export default function Counsellors() {
   const specialityOptions = specializations.map((s) => ({ id: String(s.id), value: s.name, label: s.name }));
 
   const countLabel =
-    items === null
-      ? "Loading…"
-      : items.length === 0
-        ? "No matches"
-        : `${items.length} ${items.length === 1 ? "counsellor" : "counsellors"}`;
+    items.length === 0
+      ? "No matches"
+      : `${items.length} ${items.length === 1 ? "counsellor" : "counsellors"}`;
 
   return (
     <div className="counsellors-page">
@@ -103,21 +80,16 @@ export default function Counsellors() {
           )}
         </div>
 
-        {error && <p className="form-error" role="alert">{error}</p>}
-        {!error && items === null && <p className="muted-center">Loading counsellors…</p>}
+        <div className="counsellors-meta">
+          <p className="result-line">
+            {items.length === 0
+              ? "No counsellors match these filters"
+              : "Browse profiles and book when you are ready"}
+          </p>
+          <span className="counsellors-count">{countLabel}</span>
+        </div>
 
-        {items !== null && (
-          <div className="counsellors-meta">
-            <p className="result-line">
-              {items.length === 0
-                ? "No counsellors match these filters"
-                : "Browse profiles and book when you are ready"}
-            </p>
-            <span className="counsellors-count">{countLabel}</span>
-          </div>
-        )}
-
-        {items !== null && items.length === 0 && (
+        {items.length === 0 && (
           <div className="empty-state">
             <p>Try another language, speciality, or session type.</p>
             {filtering && (
@@ -128,7 +100,7 @@ export default function Counsellors() {
           </div>
         )}
 
-        {items !== null && items.length > 0 && (
+        {items.length > 0 && (
           <div className="counsellors-grid">
             {items.map((c) => <CounsellorCard key={c.id} c={c} />)}
           </div>
